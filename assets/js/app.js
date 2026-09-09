@@ -1,0 +1,356 @@
+/* =============================================================
+ * app.js — 导航、路由、面板渲染、功能说明抽屉、全局搜索
+ * ============================================================= */
+(function (g) {
+  'use strict';
+  var QW = g.QW, MC = g.MC;
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+
+  /* 虚拟模块：功能全景 */
+  QW.modules.atlas = { n: '功能全景总表', ic: '☰', sub: 'Feature Atlas', desc: '平台全部功能的索引总表：按模块列出功能编号、名称、一句话说明与核心指标，可直接打开任一功能的完整说明，便于对照后续算法实现排期。' };
+  QW.groups[0].ms = ['home', 'ai', 'atlas'];
+
+  /* ---------- 行情跑马灯 ---------- */
+  function ticker() {
+    var items = [
+      ['上证指数', '3,482.16', 0.62], ['深证成指', '11,286.4', 0.94], ['创业板指', '2,412.8', 1.32],
+      ['沪深300', '4,182.63', 0.83], ['中证500', '6,284.1', 0.41], ['中证1000', '6,912.5', -0.22],
+      ['科创50', '1,142.7', 1.86], ['恒生指数', '24,861', 0.55], ['恒生科技', '5,742.3', 1.24],
+      ['标普500', '6,842.1', 0.31], ['纳斯达克', '23,184', 1.12], ['日经225', '43,286', -0.42],
+      ['10Y国债', '1.742%', -0.18], ['美元指数', '98.41', 0.12], ['USDCNH', '7.0912', -0.08],
+      ['COMEX金', '3,842.6', 0.74], ['布伦特原油', '71.24', -1.35], ['LME铜', '9,842', 0.62],
+      ['螺纹钢', '3,186', -0.44], ['碳酸锂', '82,400', 2.86], ['BTC', '112,486', -1.62],
+      ['IF当季基差', '-2.10%', -0.4], ['50ETF IV', '16.8%', 2.6], ['两融余额', '1.94万亿', 0.35]
+    ];
+    var one = items.map(function (t) {
+      var c = t[2] > 0 ? 'up' : (t[2] < 0 ? 'dn' : 'flat'), sign = t[2] > 0 ? '+' : '';
+      return '<span class="tk"><b>' + t[0] + '</b><span class="v ' + c + '">' + t[1] +
+        '</span><span class="' + c + '">' + sign + t[2].toFixed(2) + '%</span></span>';
+    }).join('');
+    $('#ticker').innerHTML = '<div class="track">' + one + one + '</div>';
+  }
+
+  /* ---------- 侧边导航 ---------- */
+  function sidebar() {
+    var h = '';
+    QW.groups.forEach(function (grp) {
+      h += '<div class="grp">' + esc(grp.n) + '</div>';
+      grp.ms.forEach(function (mid) {
+        var m = QW.modules[mid];
+        if (!m) return;
+        var ct = QW.features.filter(function (f) { return f.m === mid; }).length;
+        h += '<a class="nav" data-m="' + mid + '" href="#/m/' + mid + '">' +
+          '<span class="ic">' + m.ic + '</span><span class="nm">' + esc(m.n) + '</span>' +
+          '<span class="ct">' + (mid === 'atlas' ? QW.features.length : ct) + '</span></a>';
+      });
+    });
+    $('#side').innerHTML = h;
+  }
+
+  /* ---------- 图形渲染分派 ---------- */
+  function cell(c) {
+    if (c == null) return '--';
+    if (typeof c === 'object') {
+      if (c.bar != null) return '<span class="bar-cell" style="width:' + (14 + c.bar * 46).toFixed(0) + 'px"></span> <span style="font-size:10.5px;color:#9aa8bf">' + (c.bar * 100).toFixed(0) + '%</span>';
+      if (c.b) return '<span class="badge ' + c.b + '">' + esc(c.v) + '</span>';
+      if (c.c) return '<span class="' + c.c + '">' + esc(c.v) + '</span>';
+      return esc(c.v);
+    }
+    return esc(c);
+  }
+  function tableHTML(s) {
+    var h = '<div class="tw" style="max-height:' + (s.h || 250) + 'px"><table class="dt"><thead><tr>';
+    s.cols.forEach(function (c) { h += '<th>' + esc(c) + '</th>'; });
+    h += '</tr></thead><tbody>';
+    s.rows.forEach(function (r) {
+      h += '<tr>';
+      r.forEach(function (c) { h += '<td>' + cell(c) + '</td>'; });
+      h += '</tr>';
+    });
+    return h + '</tbody></table></div>';
+  }
+  function listHTML(s) {
+    var h = '<div class="lst" style="max-height:' + (s.h || 250) + 'px;overflow:auto">';
+    s.items.forEach(function (it) {
+      h += '<div class="row"><div><div class="t">' + it.t + '</div>' + (it.s ? '<div class="s">' + it.s + '</div>' : '') + '</div>' +
+        '<div class="rt">' + (it.b ? '<span class="badge ' + it.b + '">' + esc(it.rt || '') + '</span>' : esc(it.rt || '')) + '</div></div>';
+    });
+    return h + '</div>';
+  }
+  function chatHTML(s) {
+    var h = '<div class="chat">';
+    s.msgs.forEach(function (m) {
+      h += '<div class="msg ' + m.r + '"><div class="av">' + (m.r === 'ai' ? 'AI' : '我') + '</div><div class="bb">' + m.t + '</div></div>';
+    });
+    h += '</div><div class="askbar"><input placeholder="' + esc(s.ph || '输入你的研究问题…') + '" readonly><button>发送</button></div>';
+    return h;
+  }
+  function viz(spec) {
+    if (!spec) return '';
+    if (spec.k === 'table') return tableHTML(spec);
+    if (spec.k === 'list') return listHTML(spec);
+    if (spec.k === 'chat') return chatHTML(spec);
+    if (spec.k === 'html') return spec.html;
+    return MC.render(spec);
+  }
+
+  /* ---------- 功能卡片 ---------- */
+  function tagClass(t) {
+    if (t === 'AI' || t === '创新') return 'ai';
+    if (t === '核心') return 'new';
+    if (t === '实时') return 'rt';
+    return '';
+  }
+  // 贪心排版：按 12 栅格逐行装填，行尾不足时拉伸该行最后一张卡片，避免出现空洞
+  function layout(list) {
+    var rows = [], cur = [], fill = 0;
+    list.forEach(function (f) {
+      if (f.w > 12 - fill && cur.length) {
+        cur[cur.length - 1].w2 += 12 - fill;
+        rows.push(cur); cur = []; fill = 0;
+      }
+      cur.push({ f: f, w2: f.w }); fill += f.w;
+    });
+    if (cur.length) { if (fill < 12) cur[cur.length - 1].w2 += 12 - fill; rows.push(cur); }
+    var out = [];
+    rows.forEach(function (r) { r.forEach(function (c) { out.push(c); }); });
+    return out;
+  }
+
+  function card(f, w2) {
+    var spec;
+    try { spec = typeof f.viz === 'function' ? f.viz() : f.viz; } catch (e) { spec = null; }
+    var h = '<div class="card" style="grid-column:span ' + (w2 || f.w) + '" id="c-' + f.id + '">';
+    h += '<div class="hd"><span class="fid">' + f.id + '</span><h3>' + esc(f.n) + '</h3><div class="sp">';
+    f.tags.forEach(function (t) { h += '<span class="tag ' + tagClass(t) + '">' + esc(t) + '</span>'; });
+    h += '<button class="iconbtn" data-open="' + f.id + '">说明</button></div></div>';
+    h += '<div class="bd"><p class="desc">' + esc(f.desc) + '</p>' + viz(spec);
+    if (f.metrics.length) {
+      h += '<div class="chips">';
+      f.metrics.slice(0, 7).forEach(function (m) { h += '<span class="chip m">' + esc(m) + '</span>'; });
+      h += '</div>';
+    }
+    h += '</div>';
+    h += '<div class="ft"><span>数据源：' + esc(f.data.slice(0, 2).join(' / ') || '平台内部') + '</span>' +
+      '<span class="more" data-open="' + f.id + '">功能说明与实现要点 →</span></div></div>';
+    return h;
+  }
+
+  /* ---------- 模块页 ---------- */
+  var filterTag = '全部';
+  function renderModule(mid) {
+    var m = QW.modules[mid];
+    if (!m) return renderModule('home');
+    var main = $('#main');
+    if (mid === 'atlas') return renderAtlas();
+    var fs = QW.features.filter(function (f) { return f.m === mid; });
+    var shown = filterTag === '全部' ? fs : fs.filter(function (f) { return f.tags.indexOf(filterTag) >= 0; });
+    var kpis = (QW.kpis[mid] || []);
+    var h = '<div class="phead"><div class="bc">投研平台 / ' + esc(m.sub) + '</div>' +
+      '<h1>' + m.ic + ' ' + esc(m.n) + '<span class="cnt">' + fs.length + ' 项功能</span></h1>' +
+      '<p>' + esc(m.desc) + '</p></div>';
+    if (kpis.length) {
+      h += '<div class="kpis">';
+      kpis.forEach(function (k) {
+        h += '<div class="kpi ' + (k.c || '') + '"><div class="k">' + esc(k.k) + '</div><div class="v">' + k.v + '</div><div class="d">' + k.d + '</div></div>';
+      });
+      h += '</div>';
+    }
+    var tags = ['全部', '核心', 'AI', '实时', '风控', '创新'];
+    h += '<div class="toolbar"><div class="seg">';
+    tags.forEach(function (t) { h += '<button data-tag="' + t + '"' + (t === filterTag ? ' class="on"' : '') + '>' + t + '</button>'; });
+    h += '</div><select class="sel"><option>全部市场</option><option>A股</option><option>港股</option><option>美股</option><option>期货</option><option>债券</option></select>' +
+      '<select class="sel"><option>日频</option><option>周频</option><option>月频</option><option>分钟</option><option>实时</option></select>' +
+      '<span class="spacer"></span><span style="font-size:11.5px;color:#6b7791">展示 ' + shown.length + ' / ' + fs.length + ' 项 · 图表为示意数据，不含真实算法</span></div>';
+    h += '<div class="grid">' + layout(shown).map(function (c) { return card(c.f, c.w2); }).join('') + '</div>';
+    h += footer();
+    main.innerHTML = h;
+    main.scrollTop = 0;
+    bindPage();
+  }
+
+  function renderAtlas() {
+    var h = '<div class="phead"><div class="bc">投研平台 / Feature Atlas</div><h1>☰ 功能全景总表<span class="cnt">' +
+      QW.features.length + ' 项功能 · ' + (Object.keys(QW.modules).length - 1) + ' 个模块</span></h1>' +
+      '<p>' + esc(QW.modules.atlas.desc) + '</p></div>';
+    var stat = [
+      { k: '功能总数', v: QW.features.length, d: '覆盖投研全流程', c: '' },
+      { k: '业务模块', v: Object.keys(QW.modules).length - 1, d: '宏观到执行全链条', c: '' },
+      { k: 'AI / 创新功能', v: QW.features.filter(function (f) { return f.tags.indexOf('AI') >= 0 || f.tags.indexOf('创新') >= 0; }).length, d: '大模型与多智能体', c: 'y' },
+      { k: '核心功能', v: QW.features.filter(function (f) { return f.tags.indexOf('核心') >= 0; }).length, d: '优先实现建议', c: 'r' },
+      { k: '核心指标条目', v: QW.features.reduce(function (a, f) { return a + f.metrics.length; }, 0), d: '可直接对应字段设计', c: '' },
+      { k: '算法要点条目', v: QW.features.reduce(function (a, f) { return a + f.algo.length; }, 0), d: '后续实现参考', c: 'g' }
+    ];
+    h += '<div class="kpis">' + stat.map(function (k) {
+      return '<div class="kpi ' + k.c + '"><div class="k">' + k.k + '</div><div class="v">' + k.v + '</div><div class="d">' + k.d + '</div></div>';
+    }).join('') + '</div>';
+    QW.groups.forEach(function (grp) {
+      h += '<div class="subhd"><b>' + esc(grp.n) + '</b></div><div class="grid">';
+      grp.ms.forEach(function (mid) {
+        if (mid === 'atlas') return;
+        var m = QW.modules[mid], fs = QW.features.filter(function (f) { return f.m === mid; });
+        if (!fs.length) return;
+        h += '<div class="card" style="grid-column:span 12"><div class="hd"><span class="fid">' + fs.length + '</span><h3>' + m.ic + ' ' + esc(m.n) + '</h3>' +
+          '<div class="sp"><span class="tag">' + esc(m.sub) + '</span><a class="iconbtn" href="#/m/' + mid + '">进入模块</a></div></div><div class="bd">';
+        h += '<div class="tw" style="max-height:none"><table class="dt"><thead><tr><th style="width:76px">编号</th><th style="width:180px">功能名称</th><th style="text-align:left">功能说明</th><th style="width:230px;text-align:left">核心指标</th><th style="width:70px">说明</th></tr></thead><tbody>';
+        fs.forEach(function (f) {
+          h += '<tr><td style="font-family:ui-monospace;color:#4d9fff">' + f.id + '</td>' +
+            '<td>' + esc(f.n) + '</td>' +
+            '<td style="text-align:left;font-family:inherit;color:#9aa8bf;white-space:normal">' + esc(f.desc) + '</td>' +
+            '<td style="text-align:left;font-family:inherit;color:#6b7791;white-space:normal;font-size:10.5px">' + esc(f.metrics.slice(0, 5).join('、')) + '</td>' +
+            '<td><span class="more" style="cursor:pointer;color:#4d9fff" data-open="' + f.id + '">查看</span></td></tr>';
+        });
+        h += '</tbody></table></div></div></div>';
+      });
+      h += '</div>';
+    });
+    h += footer();
+    $('#main').innerHTML = h;
+    $('#main').scrollTop = 0;
+    bindPage();
+  }
+
+  function footer() {
+    return '<div class="footer"><span>QuantLab Pro · 投研平台功能原型</span>' +
+      '<span>功能数 <b class="hl">' + QW.features.length + '</b></span>' +
+      '<span>所有图表均为<b class="hl">示意数据</b>，不含真实行情与算法实现</span>' +
+      '<span>完整功能说明见仓库 <span class="mono">FUNCTIONS.md</span></span></div>';
+  }
+
+  /* ---------- 抽屉 ---------- */
+  function sect(title, body) { return '<div class="sect"><h4>' + title + '</h4>' + body + '</div>'; }
+  function ul(arr) { return '<ul>' + arr.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; }
+  function openDrawer(id) {
+    var f = QW.byId[id];
+    if (!f) return;
+    var m = QW.modules[f.m];
+    var h = '<div class="fid">' + f.id + ' · ' + esc(m.n) + ' / ' + esc(m.sub) + '</div><h2>' + esc(f.n) + '</h2>' +
+      '<button class="x" id="dx">✕</button>';
+    $('#dh').innerHTML = h;
+    var b = '';
+    b += sect('一句话定位', '<p>' + esc(f.desc) + '</p>');
+    b += sect('功能说明', '<p>' + esc(f.spec) + '</p>');
+    b += sect('核心指标（' + f.metrics.length + '）', ul(f.metrics));
+    b += sect('数据依赖', ul(f.data));
+    b += sect('算法实现要点（后续开发参考）', ul(f.algo));
+    b += sect('输出与下游', ul(f.out));
+    if (f.links.length) {
+      b += sect('关联功能', '<div class="linkchips">' + f.links.map(function (id) {
+        var t = QW.byId[id];
+        return '<span class="lc" data-open="' + id + '">' + id + (t ? ' ' + esc(t.n) : '') + '</span>';
+      }).join('') + '</div>');
+    }
+    b += sect('实现优先级建议', '<div class="kv">' +
+      '<div class="k">功能编号</div><div class="mono">' + f.id + '</div>' +
+      '<div class="k">所属模块</div><div>' + esc(m.n) + '</div>' +
+      '<div class="k">标签</div><div>' + (f.tags.join(' / ') || '常规') + '</div>' +
+      '<div class="k">建议阶段</div><div>' + (f.tags.indexOf('核心') >= 0 ? 'P0 — 平台骨架必备' : (f.tags.indexOf('AI') >= 0 || f.tags.indexOf('创新') >= 0 ? 'P2 — 差异化增强' : 'P1 — 完整性补齐')) + '</div>' +
+      '<div class="k">实现复杂度</div><div>' + ['低', '中', '中高', '高'][(f.algo.length + f.data.length) % 4] + '（算法要点 ' + f.algo.length + ' 项）</div>' +
+      '</div>');
+    b += '<div class="note">本页仅为功能与指标定义说明，平台原型不包含真实算法实现；上方"算法实现要点"可直接作为后续开发的技术选型清单。</div>';
+    $('#db').innerHTML = b;
+    $('#drawer').classList.add('on');
+    $('#mask').classList.add('on');
+    $('#db').scrollTop = 0;
+    if (location.hash.indexOf('/f/') < 0) history.replaceState(null, '', '#/f/' + f.id);
+  }
+  function closeDrawer() {
+    $('#drawer').classList.remove('on');
+    $('#mask').classList.remove('on');
+    if (location.hash.indexOf('/f/') >= 0) history.replaceState(null, '', '#/m/' + (cur || 'home'));
+  }
+
+  /* ---------- 事件绑定 ---------- */
+  function bindPage() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-open]'), function (el) {
+      el.onclick = function (e) { e.preventDefault(); openDrawer(el.getAttribute('data-open')); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.seg [data-tag]'), function (el) {
+      el.onclick = function () { filterTag = el.getAttribute('data-tag'); renderModule(cur); };
+    });
+  }
+
+  /* ---------- 全局搜索 ---------- */
+  function search(q) {
+    q = q.trim().toLowerCase();
+    var box = $('#sugg');
+    if (!q) { box.style.display = 'none'; return; }
+    var hit = QW.features.filter(function (f) {
+      return (f.id + ' ' + f.n + ' ' + f.desc + ' ' + f.metrics.join(' ') + ' ' + f.tags.join(' ') + ' ' + QW.modules[f.m].n).toLowerCase().indexOf(q) >= 0;
+    }).slice(0, 40);
+    var mh = Object.keys(QW.modules).filter(function (k) {
+      return (QW.modules[k].n + QW.modules[k].sub).toLowerCase().indexOf(q) >= 0;
+    }).slice(0, 5);
+    var h = '';
+    if (mh.length) {
+      h += '<div class="hd">模块</div>';
+      mh.forEach(function (k) {
+        h += '<div class="it" data-go="' + k + '"><span class="id">' + QW.modules[k].ic + '</span><span>' + esc(QW.modules[k].n) +
+          '</span><span class="m">' + esc(QW.modules[k].sub) + '</span></div>';
+      });
+    }
+    h += '<div class="hd">功能（' + hit.length + '）</div>';
+    if (!hit.length) h += '<div class="it"><span style="color:#6b7791">未找到匹配功能</span></div>';
+    hit.forEach(function (f) {
+      h += '<div class="it" data-open="' + f.id + '"><span class="id">' + f.id + '</span><span>' + esc(f.n) +
+        '</span><span class="m">' + esc(QW.modules[f.m].n) + '</span></div>';
+    });
+    box.innerHTML = h;
+    box.style.display = 'block';
+    Array.prototype.forEach.call(box.querySelectorAll('[data-open]'), function (el) {
+      el.onclick = function () { box.style.display = 'none'; openDrawer(el.getAttribute('data-open')); };
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function (el) {
+      el.onclick = function () { box.style.display = 'none'; location.hash = '#/m/' + el.getAttribute('data-go'); };
+    });
+  }
+
+  /* ---------- 路由 ---------- */
+  var cur = 'home';
+  function route() {
+    var h = location.hash || '#/m/home';
+    var mf = h.match(/#\/f\/([A-Z]+-\d+)/i);
+    if (mf) {
+      var f = QW.byId[mf[1].toUpperCase()];
+      if (f) { if (cur !== f.m) { cur = f.m; renderModule(cur); mark(); } openDrawer(f.id); return; }
+    }
+    var mm = h.match(/#\/m\/(\w+)/);
+    var mid = mm ? mm[1] : 'home';
+    if (!QW.modules[mid]) mid = 'home';
+    cur = mid;
+    closeDrawerSilent();
+    renderModule(mid);
+    mark();
+  }
+  function closeDrawerSilent() {
+    $('#drawer').classList.remove('on');
+    $('#mask').classList.remove('on');
+  }
+  function mark() {
+    Array.prototype.forEach.call(document.querySelectorAll('.nav'), function (el) {
+      el.classList.toggle('on', el.getAttribute('data-m') === cur);
+    });
+  }
+
+  /* ---------- 启动 ---------- */
+  function init() {
+    ticker();
+    sidebar();
+    $('#q').addEventListener('input', function () { search(this.value); });
+    $('#q').addEventListener('focus', function () { if (this.value) search(this.value); });
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.gsearch')) $('#sugg').style.display = 'none';
+    });
+    $('#mask').onclick = closeDrawer;
+    document.addEventListener('click', function (e) { if (e.target && e.target.id === 'dx') closeDrawer(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { closeDrawer(); $('#sugg').style.display = 'none'; }
+      if (e.key === '/' && document.activeElement !== $('#q')) { e.preventDefault(); $('#q').focus(); }
+    });
+    window.addEventListener('hashchange', route);
+    route();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})(window);

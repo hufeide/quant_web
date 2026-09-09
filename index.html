@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuantLab Pro · 全流程投资研究平台（功能原型）</title>
+<meta name="description" content="覆盖宏观、行业、大类资产、多因子、股票、基金、期货、大宗商品、期权、组合风控、交易执行与 AI 智能中枢的投研平台功能原型展示。">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<!-- 顶部栏 -->
+<header class="top">
+  <div class="brand">
+    <div class="logo"></div>
+    <div><b>QuantLab Pro</b><span>INVESTMENT RESEARCH</span></div>
+  </div>
+
+  <div class="gsearch">
+    <span class="ico">⌕</span>
+    <input id="q" placeholder="搜索功能、指标、模块…（如 因子、久期、雪球、Nowcasting、TCA）" autocomplete="off">
+    <span class="kbd">/</span>
+    <div class="sugg" id="sugg" style="display:none"></div>
+  </div>
+
+  <div class="tmeta">
+    <span class="pill"><span class="dot"></span>行情正常</span>
+    <span class="pill">2026-09-09 · 周三 · 交易日</span>
+    <span class="pill">研究员 · 张明</span>
+    <div class="avatar">ZM</div>
+  </div>
+</header>
+
+<!-- 行情跑马灯 -->
+<div class="ticker" id="ticker"></div>
+
+<!-- 侧边导航 -->
+<nav class="side" id="side"></nav>
+
+<!-- 主内容 -->
+<main class="main" id="main"></main>
+
+<!-- 功能说明抽屉 -->
+<div class="mask" id="mask"></div>
+<aside class="drawer" id="drawer">
+  <div class="dh" id="dh" style="position:relative"></div>
+  <div class="db" id="db"></div>
+</aside>
+
+<script src="assets/js/chartlib.js"></script>
+<script src="assets/js/registry/00-core.js"></script>
+<script src="assets/js/registry/10-home-ai.js"></script>
+<script src="assets/js/registry/20-macro-industry.js"></script>
+<script src="assets/js/registry/30-allocation-overseas.js"></script>
+<script src="assets/js/registry/40-equity.js"></script>
+<script src="assets/js/registry/45-bond-fund.js"></script>
+<script src="assets/js/registry/50-futures-commodity-options.js"></script>
+<script src="assets/js/registry/60-factor-strategy.js"></script>
+<script src="assets/js/registry/70-portfolio-execution.js"></script>
+<script src="assets/js/registry/80-data-alt-knowledge-report.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
