@@ -8,8 +8,8 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
 
   /* 虚拟模块：功能全景 */
-  QW.modules.atlas = { n: '功能全景总表', ic: '☰', sub: 'Feature Atlas', desc: '平台全部功能的索引总表：按模块列出功能编号、名称、一句话说明与核心指标，可直接打开任一功能的完整说明，便于对照后续算法实现排期。' };
-  QW.groups[0].ms = ['home', 'ai', 'atlas'];
+  QW.modules.atlas = { n: '功能全景总表', ic: '☰', sub: 'Feature Atlas', desc: '平台全部功能面板的索引总表：按模块列出编号、名称、一句话说明、子功能数量与核心指标，可直接打开任一功能的完整说明，便于对照后续算法实现排期。' };
+  QW.modules.atlas2 = { n: '子功能全表', ic: '≡', sub: 'Sub-feature Atlas', desc: '把每个功能面板拆解到可独立排期的子功能颗粒度，按「模块 → 面板 → 子功能」三级列出全部条目，支持关键词过滤，可直接作为开发任务清单（WBS）。' };
 
   /* ---------- 行情跑马灯 ---------- */
   function ticker() {
@@ -40,9 +40,10 @@
         var m = QW.modules[mid];
         if (!m) return;
         var ct = QW.features.filter(function (f) { return f.m === mid; }).length;
+        var sc = mid === 'atlas' ? QW.totalCount() : (mid === 'atlas2' ? QW.subCount() : ct + QW.subCount(mid));
         h += '<a class="nav" data-m="' + mid + '" href="#/m/' + mid + '">' +
           '<span class="ic">' + m.ic + '</span><span class="nm">' + esc(m.n) + '</span>' +
-          '<span class="ct">' + (mid === 'atlas' ? QW.features.length : ct) + '</span></a>';
+          '<span class="ct">' + sc + '</span></a>';
       });
     });
     $('#side').innerHTML = h;
@@ -131,8 +132,17 @@
       f.metrics.slice(0, 7).forEach(function (m) { h += '<span class="chip m">' + esc(m) + '</span>'; });
       h += '</div>';
     }
+    if (f.subs.length) {
+      h += '<details class="subs"><summary>子功能 <b>' + f.subs.length + '</b> 项 <span class="n">（点击展开细粒度功能清单）</span></summary><div class="sublist">';
+      f.subs.forEach(function (s) {
+        h += '<div class="s" title="' + esc(s.n + '：' + s.d) + '"><span class="i">' + s.id + '</span><span class="t">' + esc(s.n) + '</span>' +
+          (s.t ? '<span class="ai">' + esc(s.t) + '</span>' : '') + '<span class="d">' + esc(s.d) + '</span></div>';
+      });
+      h += '</div></details>';
+    }
     h += '</div>';
     h += '<div class="ft"><span>数据源：' + esc(f.data.slice(0, 2).join(' / ') || '平台内部') + '</span>' +
+      (f.subs.length ? '<span style="color:#55637d">· 含 ' + f.subs.length + ' 项子功能</span>' : '') +
       '<span class="more" data-open="' + f.id + '">功能说明与实现要点 →</span></div></div>';
     return h;
   }
@@ -144,11 +154,14 @@
     if (!m) return renderModule('home');
     var main = $('#main');
     if (mid === 'atlas') return renderAtlas();
+    if (mid === 'atlas2') return renderSubAtlas();
     var fs = QW.features.filter(function (f) { return f.m === mid; });
     var shown = filterTag === '全部' ? fs : fs.filter(function (f) { return f.tags.indexOf(filterTag) >= 0; });
     var kpis = (QW.kpis[mid] || []);
+    var nsub = QW.subCount(mid);
     var h = '<div class="phead"><div class="bc">投研平台 / ' + esc(m.sub) + '</div>' +
-      '<h1>' + m.ic + ' ' + esc(m.n) + '<span class="cnt">' + fs.length + ' 项功能</span></h1>' +
+      '<h1>' + m.ic + ' ' + esc(m.n) + '<span class="cnt">' + fs.length + ' 个功能面板</span>' +
+      '<span class="cnt">' + nsub + ' 项子功能</span><span class="cnt">合计 ' + (fs.length + nsub) + '</span></h1>' +
       '<p>' + esc(m.desc) + '</p></div>';
     if (kpis.length) {
       h += '<div class="kpis">';
@@ -162,7 +175,9 @@
     tags.forEach(function (t) { h += '<button data-tag="' + t + '"' + (t === filterTag ? ' class="on"' : '') + '>' + t + '</button>'; });
     h += '</div><select class="sel"><option>全部市场</option><option>A股</option><option>港股</option><option>美股</option><option>期货</option><option>债券</option></select>' +
       '<select class="sel"><option>日频</option><option>周频</option><option>月频</option><option>分钟</option><option>实时</option></select>' +
-      '<span class="spacer"></span><span style="font-size:11.5px;color:#6b7791">展示 ' + shown.length + ' / ' + fs.length + ' 项 · 图表为示意数据，不含真实算法</span></div>';
+      '<button class="iconbtn" id="expandAll">展开全部子功能</button>' +
+      '<button class="iconbtn" id="collapseAll">收起</button>' +
+      '<span class="spacer"></span><span style="font-size:11.5px;color:#6b7791">展示 ' + shown.length + ' / ' + fs.length + ' 个面板 · 图表为示意数据，不含真实算法</span></div>';
     h += '<div class="grid">' + layout(shown).map(function (c) { return card(c.f, c.w2); }).join('') + '</div>';
     h += footer();
     main.innerHTML = h;
@@ -172,15 +187,19 @@
 
   function renderAtlas() {
     var h = '<div class="phead"><div class="bc">投研平台 / Feature Atlas</div><h1>☰ 功能全景总表<span class="cnt">' +
-      QW.features.length + ' 项功能 · ' + (Object.keys(QW.modules).length - 1) + ' 个模块</span></h1>' +
+      QW.totalCount() + ' 项功能 · ' + nmod() + ' 个模块</span></h1>' +
       '<p>' + esc(QW.modules.atlas.desc) + '</p></div>';
+    var aiSub = 0;
+    QW.features.forEach(function (f) { f.subs.forEach(function (x) { if (x.t) aiSub++; }); });
     var stat = [
-      { k: '功能总数', v: QW.features.length, d: '覆盖投研全流程', c: '' },
-      { k: '业务模块', v: Object.keys(QW.modules).length - 1, d: '宏观到执行全链条', c: '' },
-      { k: 'AI / 创新功能', v: QW.features.filter(function (f) { return f.tags.indexOf('AI') >= 0 || f.tags.indexOf('创新') >= 0; }).length, d: '大模型与多智能体', c: 'y' },
-      { k: '核心功能', v: QW.features.filter(function (f) { return f.tags.indexOf('核心') >= 0; }).length, d: '优先实现建议', c: 'r' },
+      { k: '功能总数', v: QW.totalCount(), d: '功能面板 ' + QW.panelCount() + ' + 子功能 ' + QW.subCount(), c: 'r' },
+      { k: '业务模块', v: nmod(), d: '宏观到执行 + 一级/另类/业务/治理', c: '' },
+      { k: '功能面板', v: QW.panelCount(), d: '每个面板一块可视化界面', c: '' },
+      { k: '子功能', v: QW.subCount(), d: '平均每面板 ' + (QW.subCount() / QW.panelCount()).toFixed(1) + ' 项', c: '' },
+      { k: 'AI / 创新功能', v: QW.features.filter(function (f) { return f.tags.indexOf('AI') >= 0 || f.tags.indexOf('创新') >= 0; }).length + aiSub, d: '面板级 + 子功能级 AI 标记', c: 'y' },
       { k: '核心指标条目', v: QW.features.reduce(function (a, f) { return a + f.metrics.length; }, 0), d: '可直接对应字段设计', c: '' },
-      { k: '算法要点条目', v: QW.features.reduce(function (a, f) { return a + f.algo.length; }, 0), d: '后续实现参考', c: 'g' }
+      { k: '算法要点条目', v: QW.features.reduce(function (a, f) { return a + f.algo.length; }, 0), d: '后续实现参考', c: 'g' },
+      { k: '功能关联关系', v: QW.features.reduce(function (a, f) { return a + f.links.length; }, 0), d: '构成功能依赖图', c: '' }
     ];
     h += '<div class="kpis">' + stat.map(function (k) {
       return '<div class="kpi ' + k.c + '"><div class="k">' + k.k + '</div><div class="v">' + k.v + '</div><div class="d">' + k.d + '</div></div>';
@@ -188,16 +207,19 @@
     QW.groups.forEach(function (grp) {
       h += '<div class="subhd"><b>' + esc(grp.n) + '</b></div><div class="grid">';
       grp.ms.forEach(function (mid) {
-        if (mid === 'atlas') return;
+        if (mid === 'atlas' || mid === 'atlas2') return;
         var m = QW.modules[mid], fs = QW.features.filter(function (f) { return f.m === mid; });
         if (!fs.length) return;
-        h += '<div class="card" style="grid-column:span 12"><div class="hd"><span class="fid">' + fs.length + '</span><h3>' + m.ic + ' ' + esc(m.n) + '</h3>' +
-          '<div class="sp"><span class="tag">' + esc(m.sub) + '</span><a class="iconbtn" href="#/m/' + mid + '">进入模块</a></div></div><div class="bd">';
-        h += '<div class="tw" style="max-height:none"><table class="dt"><thead><tr><th style="width:76px">编号</th><th style="width:180px">功能名称</th><th style="text-align:left">功能说明</th><th style="width:230px;text-align:left">核心指标</th><th style="width:70px">说明</th></tr></thead><tbody>';
+        var ns = QW.subCount(mid);
+        h += '<div class="card" style="grid-column:span 12"><div class="hd"><span class="fid">' + (fs.length + ns) + '</span><h3>' + m.ic + ' ' + esc(m.n) + '</h3>' +
+          '<div class="sp"><span class="tag">' + esc(m.sub) + '</span><span class="tag">' + fs.length + ' 面板 + ' + ns + ' 子功能</span>' +
+          '<a class="iconbtn" href="#/m/' + mid + '">进入模块</a></div></div><div class="bd">';
+        h += '<div class="tw" style="max-height:none"><table class="dt"><thead><tr><th style="width:70px">编号</th><th style="width:170px">功能名称</th><th style="text-align:left">功能说明</th><th style="width:44px">子功能</th><th style="width:210px;text-align:left">核心指标</th><th style="width:60px">说明</th></tr></thead><tbody>';
         fs.forEach(function (f) {
           h += '<tr><td style="font-family:ui-monospace;color:#4d9fff">' + f.id + '</td>' +
             '<td>' + esc(f.n) + '</td>' +
             '<td style="text-align:left;font-family:inherit;color:#9aa8bf;white-space:normal">' + esc(f.desc) + '</td>' +
+            '<td>' + f.subs.length + '</td>' +
             '<td style="text-align:left;font-family:inherit;color:#6b7791;white-space:normal;font-size:10.5px">' + esc(f.metrics.slice(0, 5).join('、')) + '</td>' +
             '<td><span class="more" style="cursor:pointer;color:#4d9fff" data-open="' + f.id + '">查看</span></td></tr>';
         });
@@ -211,9 +233,56 @@
     bindPage();
   }
 
+  // 子功能全表页
+  function renderSubAtlas() {
+    var h = '<div class="phead"><div class="bc">投研平台 / Sub-feature Atlas</div><h1>≡ 子功能全表<span class="cnt">' +
+      QW.subCount() + ' 项子功能</span><span class="cnt">' + QW.panelCount() + ' 个面板</span></h1>' +
+      '<p>' + esc(QW.modules.atlas2.desc) + '</p></div>';
+    h += '<div class="toolbar"><input class="sel" id="subq" placeholder="过滤子功能（名称 / 说明 / 编号）" style="width:280px;height:26px">' +
+      '<span class="spacer"></span><span style="font-size:11.5px;color:#6b7791">按模块 → 面板 → 子功能 三级列出，可用于排期与任务拆分</span></div>';
+    QW.groups.forEach(function (grp) {
+      var ms = grp.ms.filter(function (mid) { return mid !== 'atlas' && mid !== 'atlas2' && QW.subCount(mid); });
+      if (!ms.length) return;
+      h += '<div class="subhd"><b>' + esc(grp.n) + '</b></div><div class="grid">';
+      ms.forEach(function (mid) {
+        var m = QW.modules[mid];
+        h += '<div class="card" style="grid-column:span 12"><div class="hd"><span class="fid">' + QW.subCount(mid) +
+          '</span><h3>' + m.ic + ' ' + esc(m.n) + '</h3><div class="sp"><a class="iconbtn" href="#/m/' + mid + '">进入模块</a></div></div><div class="bd">';
+        h += '<div class="tw" style="max-height:none"><table class="dt"><thead><tr><th style="width:74px">编号</th>' +
+          '<th style="width:150px">所属面板</th><th style="width:180px">子功能名称</th><th style="text-align:left">说明</th></tr></thead><tbody>';
+        QW.features.filter(function (f) { return f.m === mid; }).forEach(function (f) {
+          f.subs.forEach(function (sb) {
+            h += '<tr class="subrow" data-k="' + esc((sb.id + ' ' + sb.n + ' ' + sb.d).toLowerCase()) + '">' +
+              '<td style="font-family:ui-monospace;color:#4d9fff">' + sb.id + '</td>' +
+              '<td style="font-size:10.5px;color:#6b7791"><span class="more" style="cursor:pointer" data-open="' + f.id + '">' + esc(f.n) + '</span></td>' +
+              '<td>' + esc(sb.n) + (sb.t ? ' <span class="badge info">' + esc(sb.t) + '</span>' : '') + '</td>' +
+              '<td style="text-align:left;font-family:inherit;color:#9aa8bf;white-space:normal">' + esc(sb.d) + '</td></tr>';
+          });
+        });
+        h += '</tbody></table></div></div></div>';
+      });
+      h += '</div>';
+    });
+    h += footer();
+    $('#main').innerHTML = h;
+    $('#main').scrollTop = 0;
+    bindPage();
+    var sq = $('#subq');
+    if (sq) sq.oninput = function () {
+      var v = this.value.trim().toLowerCase();
+      Array.prototype.forEach.call(document.querySelectorAll('tr.subrow'), function (tr) {
+        tr.style.display = (!v || tr.getAttribute('data-k').indexOf(v) >= 0) ? '' : 'none';
+      });
+    };
+  }
+
+  function nmod() {
+    return Object.keys(QW.modules).filter(function (k) { return k !== 'atlas' && k !== 'atlas2'; }).length;
+  }
   function footer() {
     return '<div class="footer"><span>QuantLab Pro · 投研平台功能原型</span>' +
-      '<span>功能数 <b class="hl">' + QW.features.length + '</b></span>' +
+      '<span>功能数 <b class="hl">' + QW.totalCount() + '</b>（面板 ' + QW.panelCount() + ' + 子功能 ' + QW.subCount() + '）</span>' +
+      '<span>模块 <b class="hl">' + nmod() + '</b></span>' +
       '<span>所有图表均为<b class="hl">示意数据</b>，不含真实行情与算法实现</span>' +
       '<span>完整功能说明见仓库 <span class="mono">FUNCTIONS.md</span></span></div>';
   }
@@ -231,6 +300,14 @@
     var b = '';
     b += sect('一句话定位', '<p>' + esc(f.desc) + '</p>');
     b += sect('功能说明', '<p>' + esc(f.spec) + '</p>');
+    if (f.subs.length) {
+      var st = '<table class="subtable">';
+      f.subs.forEach(function (s) {
+        st += '<tr><td class="i">' + s.id + '</td><td class="t">' + esc(s.n) + (s.t ? '<span class="ai">' + esc(s.t) + '</span>' : '') +
+          '</td><td class="d">' + esc(s.d) + '</td></tr>';
+      });
+      b += sect('子功能清单（' + f.subs.length + ' 项）', st + '</table>');
+    }
     b += sect('核心指标（' + f.metrics.length + '）', ul(f.metrics));
     b += sect('数据依赖', ul(f.data));
     b += sect('算法实现要点（后续开发参考）', ul(f.algo));
@@ -269,6 +346,12 @@
     Array.prototype.forEach.call(document.querySelectorAll('.seg [data-tag]'), function (el) {
       el.onclick = function () { filterTag = el.getAttribute('data-tag'); renderModule(cur); };
     });
+    var ea = document.querySelector('#expandAll'), ca = document.querySelector('#collapseAll');
+    var setAll = function (v) {
+      Array.prototype.forEach.call(document.querySelectorAll('details.subs'), function (d) { d.open = v; });
+    };
+    if (ea) ea.onclick = function () { setAll(true); };
+    if (ca) ca.onclick = function () { setAll(false); };
   }
 
   /* ---------- 全局搜索 ---------- */
@@ -278,7 +361,15 @@
     if (!q) { box.style.display = 'none'; return; }
     var hit = QW.features.filter(function (f) {
       return (f.id + ' ' + f.n + ' ' + f.desc + ' ' + f.metrics.join(' ') + ' ' + f.tags.join(' ') + ' ' + QW.modules[f.m].n).toLowerCase().indexOf(q) >= 0;
-    }).slice(0, 40);
+    }).slice(0, 30);
+    // 子功能命中（打开其所属面板说明）
+    var shit = [];
+    QW.features.forEach(function (f) {
+      f.subs.forEach(function (sb) {
+        if ((sb.id + ' ' + sb.n + ' ' + sb.d).toLowerCase().indexOf(q) >= 0) shit.push({ f: f, s: sb });
+      });
+    });
+    shit = shit.slice(0, 40);
     var mh = Object.keys(QW.modules).filter(function (k) {
       return (QW.modules[k].n + QW.modules[k].sub).toLowerCase().indexOf(q) >= 0;
     }).slice(0, 5);
@@ -290,12 +381,19 @@
           '</span><span class="m">' + esc(QW.modules[k].sub) + '</span></div>';
       });
     }
-    h += '<div class="hd">功能（' + hit.length + '）</div>';
-    if (!hit.length) h += '<div class="it"><span style="color:#6b7791">未找到匹配功能</span></div>';
+    h += '<div class="hd">功能面板（' + hit.length + '）</div>';
+    if (!hit.length) h += '<div class="it"><span style="color:#6b7791">未找到匹配的功能面板</span></div>';
     hit.forEach(function (f) {
       h += '<div class="it" data-open="' + f.id + '"><span class="id">' + f.id + '</span><span>' + esc(f.n) +
         '</span><span class="m">' + esc(QW.modules[f.m].n) + '</span></div>';
     });
+    if (shit.length) {
+      h += '<div class="hd">子功能（' + shit.length + '）</div>';
+      shit.forEach(function (x) {
+        h += '<div class="it" data-open="' + x.f.id + '"><span class="id">' + x.s.id + '</span><span>' + esc(x.s.n) +
+          '</span><span class="m">' + esc(x.f.n) + '</span></div>';
+      });
+    }
     box.innerHTML = h;
     box.style.display = 'block';
     Array.prototype.forEach.call(box.querySelectorAll('[data-open]'), function (el) {

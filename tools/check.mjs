@@ -4,19 +4,9 @@ import vm from 'node:vm';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
-const files = [
-  'assets/js/chartlib.js',
-  'assets/js/registry/00-core.js',
-  'assets/js/registry/10-home-ai.js',
-  'assets/js/registry/20-macro-industry.js',
-  'assets/js/registry/30-allocation-overseas.js',
-  'assets/js/registry/40-equity.js',
-  'assets/js/registry/45-bond-fund.js',
-  'assets/js/registry/50-futures-commodity-options.js',
-  'assets/js/registry/60-factor-strategy.js',
-  'assets/js/registry/70-portfolio-execution.js',
-  'assets/js/registry/80-data-alt-knowledge-report.js'
-];
+const fs2 = fs;
+const files = ['assets/js/chartlib.js',
+  ...fs.readdirSync(path.join(root, 'assets/js/registry')).sort().map(f => 'assets/js/registry/' + f)];
 
 const sandbox = { console };
 sandbox.window = sandbox;
@@ -36,6 +26,12 @@ let errs = [], warn = [], svgTotal = 0, kinds = {};
 
 for (const f of QW.features) {
   for (const k of ['desc', 'spec']) if (!f[k] || f[k].length < 10) errs.push(`${f.id} 缺少 ${k}`);
+  if (!f.subs.length) errs.push(`${f.id} 缺少子功能`);
+  f.subs.forEach((sb, i) => {
+    if (!sb.n || sb.n.length > 18) errs.push(`${sb.id} 子功能名称异常`);
+    if (!sb.d || sb.d.length < 6) errs.push(`${sb.id} 子功能说明过短`);
+    if (sb.id !== `${f.id}.${i+1}`) errs.push(`${sb.id} 编号不连续`);
+  });
   for (const k of ['metrics', 'data', 'algo', 'out']) if (!f[k].length) errs.push(`${f.id} 缺少 ${k}`);
   if (!QW.modules[f.m]) errs.push(`${f.id} 模块无效: ${f.m}`);
   for (const l of f.links) if (!QW.byId[l]) errs.push(`${f.id} 关联功能不存在: ${l}`);
@@ -63,8 +59,8 @@ for (const f of QW.features) {
   if (![3, 4, 6, 8, 12].includes(f.w)) errs.push(`${f.id} 栅格基础宽度非法: ${f.w}`);
 }
 
-console.log('功能总数:', QW.features.length);
-console.log('模块数:', Object.keys(QW.modules).length - 1);
+console.log('功能面板:', QW.features.length, '| 子功能:', QW.subCount(), '| 功能总数:', QW.totalCount());
+console.log('模块数:', Object.keys(QW.modules).filter(k=>k!=='atlas'&&k!=='atlas2').length);
 console.log('各模块功能数:', JSON.stringify(byMod));
 console.log('图表类型分布:', JSON.stringify(kinds));
 console.log('SVG 总字节:', svgTotal);

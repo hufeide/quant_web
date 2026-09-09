@@ -11,11 +11,15 @@
 
   /* ---------- 模块目录 ---------- */
   QW.groups = [
-    { n: '总览与智能中枢', ms: ['home', 'ai'] },
-    { n: '自上而下研究', ms: ['macro', 'industry', 'allocation', 'overseas'] },
-    { n: '分资产研究', ms: ['equity', 'bond', 'fund', 'futures', 'commodity', 'options'] },
-    { n: '量化引擎', ms: ['factor', 'strategy', 'portfolio', 'execution'] },
-    { n: '数据与运营', ms: ['data', 'altdata', 'knowledge', 'report'] }
+    { n: '总览与智能信号', ms: ['home', 'radar', 'regime', 'atlas', 'atlas2'] },
+    { n: 'AI 智能体系', ms: ['ai', 'agent', 'aiagents', 'researchos', 'arena', 'aiops'] },
+    { n: '自上而下研究', ms: ['macro', 'industry', 'allocation', 'overseas', 'theme', 'sustain'] },
+    { n: '分资产研究', ms: ['equity', 'bond', 'fund', 'futures', 'commodity', 'options', 'rates'] },
+    { n: '另类与一级市场', ms: ['primary', 'realestate', 'crypto', 'credit'] },
+    { n: '量化与组合引擎', ms: ['factor', 'strategy', 'aipm', 'portfolio', 'execution', 'market'] },
+    { n: '资管业务与客户', ms: ['insurance', 'wealth', 'client'] },
+    { n: '数据与知识底座', ms: ['data', 'altdata', 'knowledge', 'platform'] },
+    { n: '报告合规与治理', ms: ['report', 'regtech'] }
   ];
 
   QW.modules = {
@@ -38,10 +42,40 @@
     data: { n: '数据与因子平台', ic: '▤', sub: 'Data Platform', desc: '数据接入、清洗、复权、时点数据库(PIT)、特征仓库、血缘与质量监控。' },
     altdata: { n: '另类数据与 ESG', ic: '⌗', sub: 'Alt Data & ESG', desc: '卫星、票据、招聘、App、舆情、供应链等另类数据，与 ESG/碳排放评估体系。' },
     knowledge: { n: '知识图谱与研报中心', ic: '⌸', sub: 'Knowledge', desc: '公司—人—产品—事件知识图谱、研报库语义检索、路演与调研记录、观点跟踪与复盘。' },
-    report: { n: '绩效归因与报告', ic: '⎙', sub: 'Performance', desc: 'Brinson/Barra 归因、业绩报告自动化、客户账户核对、投研 KPI 与合规留痕。' }
+    report: { n: '绩效归因与报告', ic: '⎙', sub: 'Performance', desc: 'Brinson/Barra 归因、业绩报告自动化、客户账户核对、投研 KPI 与合规留痕。' },
+
+    /* ---- 二期扩展模块 ---- */
+    agent: { n: 'AI 智能体工厂', ic: '⬡', sub: 'Agent Factory', desc: '把投研流程封装为可编排、可评测、可审计的智能体：工具注册、记忆体系、多智能体辩论、工作流自动化与人机协同接管。' },
+    aiops: { n: 'AI 工程与模型治理', ic: '⚛', sub: 'AI Ops & MRM', desc: '模型全生命周期治理：训练编排、特征漂移、评测基准、Prompt 版本、推理成本、模型风险管理与监管解释义务。' },
+    theme: { n: '主题投资与概念挖掘', ic: '✧', sub: 'Thematic', desc: '从技术演进与政策叙事出发，自动发现主题、构建概念图谱、映射受益标的、跟踪叙事生命周期与拥挤退出。' },
+    sustain: { n: '转型金融与碳市场', ic: '♻', sub: 'Transition', desc: '碳配额与 CCER 定价、企业转型路径评估、绿色债券与转型债、气候物理风险与搁浅资产测算。' },
+    rates: { n: '利率与外汇衍生品', ic: '∿', sub: 'Rates & FX', desc: '利率互换与曲线交易、国债期货基差与 CTD、外汇远期掉期期权、跨币种基差与利率曲线套利。' },
+    primary: { n: '一级市场与私募股权', ic: '◐', sub: 'Private Equity', desc: '一级项目库与融资轮次跟踪、估值与条款分析、PE/VC 基金业绩（IRR/TVPI）、Pre-IPO 与退出路径管理。' },
+    realestate: { n: '不动产与 REITs', ic: '⌂', sub: 'Real Estate', desc: '公募 REITs 估值与分派、底层资产运营（出租率/租金）、城市与板块景气、不动产周期与开发商信用。' },
+    crypto: { n: '数字资产与代币化', ic: '◊', sub: 'Digital Assets', desc: '加密资产行情与链上数据、稳定币与 DeFi 收益、衍生品资金费率、代币化 RWA 与合规托管。' },
+    credit: { n: '结构化融资与 ABS', ic: '⊟', sub: 'Structured Credit', desc: 'ABS/RMBS/CLO 的资产池穿透、现金流分层与瀑布、提前还款与违约假设、评级与利差相对价值。' },
+    insurance: { n: '保险资管与负债驱动', ic: '⛨', sub: 'Insurance & LDI', desc: '负债现金流与久期缺口、偿付能力与资本占用、会计与利润表约束、长期资金的战略配置与再投资风险。' },
+    wealth: { n: '财富管理与智能投顾', ic: '☗', sub: 'Wealth & Robo', desc: '客户画像与风险测评、目标导向规划、智能组合推荐与陪伴、税务与费用优化、投顾话术与合规适当性。' },
+    client: { n: '机构客户与业务运营', ic: '⌾', sub: 'Client Ops', desc: '机构客户档案与需求跟踪、渠道与路演管理、资金流预测、销售支持素材与客户满意度经营。' },
+    market: { n: '做市与流动性提供', ic: '⇋', sub: 'Market Making', desc: '双边报价与库存管理、逆向选择风险、做市义务考核、ETF 与债券做市、跨品种对冲与风险中性化。' },
+    platform: { n: '平台工程与投研效能', ic: '⌘', sub: 'Platform Eng', desc: '研究环境与算力供给、代码与数据版本、可复现实验、SDK 与 API 网关、平台可观测性与成本治理。' },
+    regtech: { n: '监管科技与合规智能', ic: '⚖', sub: 'RegTech', desc: '法规变更追踪与影响分析、异常交易识别、内幕与利益冲突监控、信息隔离墙、监管报送与检查应对。' },
+
+    /* ---- 三期引擎模块（add_function.md 扩展） ---- */
+    radar: { n: '市场异常雷达', ic: '◎', sub: 'Anomaly Radar', desc: '汇聚价、量、波动、盘口、资金、期权、跨市场、信息八类实时异常，自动加工为带概率与预期收益的机会或风险线索。' },
+    regime: { n: '市场状态引擎', ic: '∿', sub: 'Regime Engine', desc: '趋势/波动/流动性/信用/风险偏好五维状态识别与体制切换预测，驱动因子、策略、组合与执行参数的全局动态联动。' },
+    aiagents: { n: 'AI 岗位智能体', ic: '♟', sub: 'Role Agents', desc: '投资经理、宏观/行业/基本面研究员、交易员、风控等 17 类岗位智能体，自动组队、记忆经验、反思纠错与观点竞争。' },
+    researchos: { n: 'AI 自动研究工厂', ic: '⛭', sub: 'Research Factory', desc: '从自动提出问题、生成假设、寻找反例、取数做因子到回测、过拟合闸门、改进、成文跟踪的无人值守研究闭环。' },
+    arena: { n: '预测竞技场', ic: '◬', sub: 'Forecast Arena', desc: '大模型、机器学习与统计模型对股票、宏观、利率、汇率同题竞赛，按真实结果排名、校准与动态集成。' },
+    aipm: { n: 'AI 组合驾驶舱', ic: '◐', sub: 'AI Portfolio Copilot', desc: 'AI 自动交易决策、动态风险预算与杠杆、尾部对冲 Overlay、危机防御模式、反事实引擎与可拖拽组合沙盘。' }
   };
 
   /* ---------- 注册器 ---------- */
+  // 子功能紧凑写法："名称|一句话说明|可选标签"
+  function parseSub(fid, s, i) {
+    var a = String(s).split('|');
+    return { id: fid + '.' + (i + 1), n: (a[0] || '').trim(), d: (a[1] || '').trim(), t: (a[2] || '').trim() };
+  }
   QW.F = function (o) {
     if (!o.id || !o.m) throw new Error('feature 缺少 id/m');
     o.w = o.w || 6;
@@ -51,10 +85,28 @@
     o.algo = o.algo || [];
     o.out = o.out || [];
     o.links = o.links || [];
+    o.subs = (o.subs || []).map(function (s, i) { return parseSub(o.id, s, i); });
     QW.features.push(o);
     QW.byId[o.id] = o;
     return o;
   };
+  // 为已注册的功能面板追加子功能（供深化补充的注册文件使用）
+  QW.S = function (fid) {
+    var f = QW.byId[fid];
+    if (!f) throw new Error('S(): 功能不存在 ' + fid);
+    for (var i = 1; i < arguments.length; i++) {
+      f.subs.push(parseSub(fid, arguments[i], f.subs.length));
+    }
+    return f;
+  };
+  // 统计：子功能总数 / 功能总数（面板 + 子功能）
+  QW.subCount = function (mid) {
+    return QW.features.reduce(function (a, f) { return a + ((!mid || f.m === mid) ? f.subs.length : 0); }, 0);
+  };
+  QW.panelCount = function (mid) {
+    return QW.features.filter(function (f) { return !mid || f.m === mid; }).length;
+  };
+  QW.totalCount = function (mid) { return QW.panelCount(mid) + QW.subCount(mid); };
 
   /* ---------- 图形工厂（数据由 id 作种子生成，纯展示） ---------- */
   var P = g.MC.T.pal;
@@ -205,7 +257,7 @@
           }
           else if (spec === 'big') row.push(g.MC.fmt(1e8 + r() * 9e9, 1));
           else if (spec === 'bar') row.push({ bar: r() });
-          else row.push((r() * 100).toFixed(2));
+          else row.push((18 + r() * 78).toFixed(2));
         }
         return row;
       })

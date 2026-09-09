@@ -33,14 +33,9 @@ sandbox.document = {
 sandbox.addEventListener = (ev, fn) => { (listeners[ev] = listeners[ev] || []).push(fn); };
 
 const ctx = vm.createContext(sandbox);
-for (const f of [
-  'assets/js/chartlib.js', 'assets/js/registry/00-core.js', 'assets/js/registry/10-home-ai.js',
-  'assets/js/registry/20-macro-industry.js', 'assets/js/registry/30-allocation-overseas.js',
-  'assets/js/registry/40-equity.js', 'assets/js/registry/45-bond-fund.js',
-  'assets/js/registry/50-futures-commodity-options.js', 'assets/js/registry/60-factor-strategy.js',
-  'assets/js/registry/70-portfolio-execution.js', 'assets/js/registry/80-data-alt-knowledge-report.js',
-  'assets/js/app.js'
-]) new vm.Script(load(f), { filename: f }).runInContext(ctx);
+const regFiles = fs.readdirSync(path.join(root, 'assets/js/registry')).sort().map(f => 'assets/js/registry/' + f);
+for (const f of ['assets/js/chartlib.js', ...regFiles, 'assets/js/app.js'])
+  new vm.Script(load(f), { filename: f }).runInContext(ctx);
 
 const QW = sandbox.QW;
 let bad = [];
@@ -76,6 +71,7 @@ for (const f of QW.features) {
   if (!dh.includes(f.id)) bad.push(`${f.id} 抽屉标题未渲染`);
   if (d.length < 600) bad.push(`${f.id} 抽屉内容过短: ${d.length}`);
   if (!/算法实现要点/.test(d)) bad.push(`${f.id} 抽屉缺少算法要点`);
+  if (f.subs.length && !/子功能清单/.test(d)) bad.push(`${f.id} 抽屉缺少子功能清单`);
   if (/undefined|NaN/.test(d)) bad.push(`${f.id} 抽屉含 undefined/NaN`);
 }
 

@@ -266,3 +266,34 @@ table.dt tr:hover td { background: #161e2d; }
 .footer { margin-top: 26px; padding: 14px 0 30px; border-top: 1px solid var(--line); color: var(--tx3); font-size: 11.5px; display: flex; gap: 16px; flex-wrap: wrap; }
 .hl { color: var(--acc); }
 .mono { font-family: ui-monospace, monospace; }
+
+/* ---------- 子功能（第三层） ---------- */
+details.subs { margin-top: 8px; border-top: 1px dashed var(--line); padding-top: 7px; }
+details.subs > summary {
+  cursor: pointer; font-size: 11px; color: var(--acc); list-style: none; display: flex; align-items: center; gap: 6px;
+  padding: 2px 0; user-select: none;
+}
+details.subs > summary::-webkit-details-marker { display: none; }
+details.subs > summary::before { content: "▸"; font-size: 9px; transition: transform .15s; }
+details.subs[open] > summary::before { transform: rotate(90deg); }
+details.subs > summary:hover { color: #8dc3ff; }
+details.subs > summary .n { color: var(--tx3); font-weight: 400; }
+.sublist { margin: 6px 0 2px; display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; }
+@media (max-width: 1400px) { .sublist { grid-template-columns: 1fr; } }
+.sublist .s {
+  display: flex; gap: 6px; align-items: baseline; font-size: 11px; padding: 3px 6px; border-radius: 4px;
+  background: #0f1522; border: 1px solid #1a2231;
+}
+.sublist .s:hover { border-color: #2a3448; }
+.sublist .s .i { font: 9.5px/1.4 ui-monospace, monospace; color: #55637d; flex: none; }
+.sublist .s .t { color: #c3cde0; flex: none; }
+.sublist .s .d { color: var(--tx3); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sublist .s .ai { color: var(--ai); font-size: 9px; border: 1px solid rgba(34,193,195,.35); border-radius: 3px; padding: 0 3px; flex: none; }
+
+/* 抽屉内子功能表 */
+.subtable { width: 100%; border-collapse: collapse; font-size: 12px; }
+.subtable td { padding: 5px 6px; border-bottom: 1px solid #1a2231; vertical-align: top; }
+.subtable td.i { font: 10px/1.6 ui-monospace, monospace; color: var(--acc); width: 62px; }
+.subtable td.t { color: #dce4f2; width: 150px; }
+.subtable td.d { color: #97a5bd; }
+.subtable .ai { color: var(--ai); font-size: 9.5px; border: 1px solid rgba(34,193,195,.35); border-radius: 3px; padding: 0 4px; margin-left: 5px; }
