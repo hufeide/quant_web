@@ -546,6 +546,64 @@
     return s + '</svg>';
   };
 
+  // 可搭建流程画布（分层节点 + 连线，用于 AI 工作台）
+  C.flow = function (o) {
+    var layers = o.layers || [], h = o.height || 280;
+    var padL = 16, padR = 16, padT = 26, padB = 14, gapX = 12, gapY = 8, nh = 30;
+    var innerW = W - padL - padR, nL = layers.length;
+    var colW = (innerW - gapX * (nL - 1)) / nL;
+    var maxRows = Math.max.apply(null, layers.map(function (l) { return l.length; }));
+    var needH = padT + padB + maxRows * nh + (maxRows - 1) * gapY;
+    h = Math.max(h, needH);
+    var s = open(h);
+    function colX(li) { return padL + li * (colW + gapX); }
+    function nodePos(li, ni) {
+      var rows = layers[li].length;
+      var blockH = rows * nh + (rows - 1) * gapY;
+      var y0 = padT + (h - padT - padB - blockH) / 2;
+      return { x: colX(li), y: y0 + ni * (nh + gapY), w: colW, h: nh };
+    }
+    // 层标题
+    layers.forEach(function (l, li) {
+      var t = o.titles ? o.titles[li] : null;
+      if (t) s += '<text x="' + (colX(li) + colW / 2).toFixed(1) + '" y="15" fill="#7d8ca8" font-size="9.5" text-anchor="middle">' + esc(t) + '</text>';
+    });
+    // 连线
+    var edges = o.edges || [];
+    if (!edges.length) {
+      for (var li = 0; li < nL - 1; li++) {
+        layers[li].forEach(function (_, ni) {
+          var nxt = layers[li + 1];
+          nxt.forEach(function (_, nj) { edges.push([li, ni, li + 1, nj]); });
+        });
+      }
+    }
+    edges.forEach(function (e) {
+      var a = nodePos(e[0], e[1]), b = nodePos(e[2], e[3]);
+      var x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = b.x, y2 = b.y + b.h / 2;
+      var mx = (x1 + x2) / 2;
+      s += '<path d="M' + x1.toFixed(1) + ' ' + y1.toFixed(1) + ' C' + mx.toFixed(1) + ' ' + y1.toFixed(1) +
+        ' ' + mx.toFixed(1) + ' ' + y2.toFixed(1) + ' ' + x2.toFixed(1) + ' ' + y2.toFixed(1) +
+        '" stroke="#3a4763" stroke-width="1.1" fill="none" opacity="0.7"/>';
+      s += '<polygon points="' + (x2 - 5).toFixed(1) + ',' + (y2 - 3).toFixed(1) + ' ' +
+        (x2 + 1).toFixed(1) + ',' + y2.toFixed(1) + ' ' + (x2 - 5).toFixed(1) + ',' + (y2 + 3).toFixed(1) +
+        '" fill="#3a4763" opacity="0.8"/>';
+    });
+    // 节点
+    layers.forEach(function (l, li) {
+      l.forEach(function (txt, ni) {
+        var q = nodePos(li, ni), c = (o.colors || T.pal)[li % (o.colors || T.pal).length];
+        s += '<rect x="' + q.x.toFixed(1) + '" y="' + q.y.toFixed(1) + '" width="' + q.w.toFixed(1) + '" height="' + q.h +
+          '" rx="6" fill="#141b2b" stroke="' + c + '" stroke-width="1.3"/>';
+        s += '<rect x="' + q.x.toFixed(1) + '" y="' + q.y.toFixed(1) + '" width="3" height="' + q.h + '" rx="1.5" fill="' + c + '"/>';
+        var label = String(txt);
+        s += '<text x="' + (q.x + 9).toFixed(1) + '" y="' + (q.y + q.h / 2 + 3.6).toFixed(1) +
+          '" fill="#dbe3f2" font-size="9.8">' + esc(label.length > 9 ? label.slice(0, 9) : label) + '</text>';
+      });
+    });
+    return s + '</svg>';
+  };
+
   // 仪表盘（情绪 / 拥挤度）
   C.gauge = function (o) {
     var h = o.height || 190, cx = W / 2, cy = h - 34, R = Math.min(h - 56, 100), s = open(h);

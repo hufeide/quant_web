@@ -11,7 +11,7 @@
 
   /* ---------- 模块目录 ---------- */
   QW.groups = [
-    { n: '总览与智能信号', ms: ['home', 'radar', 'regime', 'atlas', 'atlas2'] },
+    { n: '总览与智能信号', ms: ['workbench', 'home', 'radar', 'regime', 'atlas', 'atlas2'] },
     { n: 'AI 智能体系', ms: ['ai', 'agent', 'aiagents', 'researchos', 'arena', 'aiops'] },
     { n: '自上而下研究', ms: ['macro', 'industry', 'allocation', 'overseas', 'theme', 'sustain'] },
     { n: '分资产研究', ms: ['equity', 'bond', 'fund', 'futures', 'commodity', 'options', 'rates'] },
@@ -67,6 +67,7 @@
     aiagents: { n: 'AI 岗位智能体', ic: '♟', sub: 'Role Agents', desc: '投资经理、宏观/行业/基本面研究员、交易员、风控等 17 类岗位智能体，自动组队、记忆经验、反思纠错与观点竞争。' },
     researchos: { n: 'AI 自动研究工厂', ic: '⛭', sub: 'Research Factory', desc: '从自动提出问题、生成假设、寻找反例、取数做因子到回测、过拟合闸门、改进、成文跟踪的无人值守研究闭环。' },
     arena: { n: '预测竞技场', ic: '◬', sub: 'Forecast Arena', desc: '大模型、机器学习与统计模型对股票、宏观、利率、汇率同题竞赛，按真实结果排名、校准与动态集成。' },
+    workbench: { n: '我的 AI 工作台', ic: '✦', sub: 'My AI Workbench', desc: '面向个人投资者、基金经理、研究员三类人群的可搭建 AI 工作台：通过搜索与对话把全平台任意功能组装成专属技能流，围绕自己的目标自动化运行。' },
     aipm: { n: 'AI 组合驾驶舱', ic: '◐', sub: 'AI Portfolio Copilot', desc: 'AI 自动交易决策、动态风险预算与杠杆、尾部对冲 Overlay、危机防御模式、反事实引擎与可拖拽组合沙盘。' }
   };
 
@@ -220,6 +221,10 @@
   V.network = function (nodes, edges, o) {
     o = o || {};
     return { k: 'network', height: o.height, nodes: nodes, edges: edges };
+  };
+  V.flow = function (layers, titles, edges, o) {
+    o = o || {};
+    return { k: 'flow', height: o.height, layers: layers, titles: titles, edges: edges, colors: o.colors };
   };
   V.gauge = function (v, label, sub, o) {
     o = o || {};
