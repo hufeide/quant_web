@@ -1,0 +1,245 @@
+{
+  "modules": {
+    "home": {
+      "panels": 9,
+      "subs": 58
+    },
+    "ai": {
+      "panels": 12,
+      "subs": 72
+    },
+    "macro": {
+      "panels": 13,
+      "subs": 84
+    },
+    "industry": {
+      "panels": 10,
+      "subs": 64
+    },
+    "allocation": {
+      "panels": 8,
+      "subs": 48
+    },
+    "overseas": {
+      "panels": 6,
+      "subs": 36
+    },
+    "equity": {
+      "panels": 17,
+      "subs": 108
+    },
+    "bond": {
+      "panels": 8,
+      "subs": 48
+    },
+    "fund": {
+      "panels": 8,
+      "subs": 48
+    },
+    "futures": {
+      "panels": 7,
+      "subs": 42
+    },
+    "commodity": {
+      "panels": 7,
+      "subs": 42
+    },
+    "options": {
+      "panels": 7,
+      "subs": 42
+    },
+    "factor": {
+      "panels": 15,
+      "subs": 96
+    },
+    "strategy": {
+      "panels": 17,
+      "subs": 116
+    },
+    "portfolio": {
+      "panels": 12,
+      "subs": 78
+    },
+    "execution": {
+      "panels": 7,
+      "subs": 44
+    },
+    "data": {
+      "panels": 11,
+      "subs": 74
+    },
+    "altdata": {
+      "panels": 8,
+      "subs": 52
+    },
+    "knowledge": {
+      "panels": 12,
+      "subs": 84
+    },
+    "report": {
+      "panels": 9,
+      "subs": 58
+    },
+    "agent": {
+      "panels": 10,
+      "subs": 62
+    },
+    "aiops": {
+      "panels": 9,
+      "subs": 54
+    },
+    "theme": {
+      "panels": 7,
+      "subs": 43
+    },
+    "sustain": {
+      "panels": 6,
+      "subs": 36
+    },
+    "rates": {
+      "panels": 7,
+      "subs": 42
+    },
+    "primary": {
+      "panels": 8,
+      "subs": 49
+    },
+    "realestate": {
+      "panels": 7,
+      "subs": 42
+    },
+    "crypto": {
+      "panels": 6,
+      "subs": 36
+    },
+    "credit": {
+      "panels": 7,
+      "subs": 42
+    },
+    "insurance": {
+      "panels": 6,
+      "subs": 36
+    },
+    "wealth": {
+      "panels": 8,
+      "subs": 49
+    },
+    "client": {
+      "panels": 6,
+      "subs": 37
+    },
+    "market": {
+      "panels": 7,
+      "subs": 46
+    },
+    "platform": {
+      "panels": 8,
+      "subs": 50
+    },
+    "regtech": {
+      "panels": 9,
+      "subs": 56
+    },
+    "radar": {
+      "panels": 6,
+      "subs": 48
+    },
+    "regime": {
+      "panels": 6,
+      "subs": 48
+    },
+    "aiagents": {
+      "panels": 8,
+      "subs": 64
+    },
+    "researchos": {
+      "panels": 10,
+      "subs": 80
+    },
+    "arena": {
+      "panels": 6,
+      "subs": 48
+    },
+    "demo": {
+      "panels": 19,
+      "subs": 113
+    },
+    "fusion": {
+      "panels": 19,
+      "subs": 270
+    },
+    "decision": {
+      "panels": 12,
+      "subs": 96
+    },
+    "construction": {
+      "panels": 10,
+      "subs": 80
+    },
+    "workbench": {
+      "panels": 16,
+      "subs": 128
+    },
+    "aipm": {
+      "panels": 7,
+      "subs": 56
+    },
+    "index": {
+      "panels": 6,
+      "subs": 36
+    },
+    "ecm": {
+      "panels": 6,
+      "subs": 37
+    },
+    "corpact": {
+      "panels": 6,
+      "subs": 36
+    },
+    "ops": {
+      "panels": 6,
+      "subs": 36
+    },
+    "liquidity": {
+      "panels": 6,
+      "subs": 36
+    },
+    "mm": {
+      "panels": 6,
+      "subs": 36
+    },
+    "geo": {
+      "panels": 6,
+      "subs": 36
+    },
+    "rv": {
+      "panels": 6,
+      "subs": 36
+    },
+    "micro": {
+      "panels": 6,
+      "subs": 36
+    },
+    "rm": {
+      "panels": 6,
+      "subs": 36
+    },
+    "tax": {
+      "panels": 4,
+      "subs": 24
+    },
+    "senti": {
+      "panels": 6,
+      "subs": 36
+    },
+    "infra": {
+      "panels": 6,
+      "subs": 36
+    },
+    "collateral": {
+      "panels": 6,
+      "subs": 36
+    }
+  },
+  "at": "2026-09-10T06:50:26.497Z"
+}

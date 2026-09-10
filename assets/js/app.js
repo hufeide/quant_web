@@ -489,7 +489,7 @@
   var cur = 'home';
   function route() {
     var h = location.hash || '#/m/home';
-    var mf = h.match(/#\/f\/([A-Z]+-\d+)/i);
+    var mf = h.match(/#\/f\/([A-Z0-9]+-\d+)/i);
     if (mf) {
       var f = QW.byId[mf[1].toUpperCase()];
       if (f) { if (cur !== f.m) { cur = f.m; renderModule(cur); mark(); } openDrawer(f.id); return; }
