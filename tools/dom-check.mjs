@@ -58,7 +58,7 @@ for (const mid of Object.keys(QW.modules)) {
   const h = els['#main'].innerHTML;
   sizes[mid] = h.length;
   if (h.length < 1500) bad.push(`模块 ${mid} 渲染内容过短: ${h.length}`);
-  if (mid !== 'atlas' && !/<svg|class="dt"|class="lst"|class="chat"/.test(h)) bad.push(`模块 ${mid} 无可视化内容`);
+  if (mid !== 'atlas' && !/<svg|class="dt"|class="lst"|class="chat"|class="demo-/.test(h)) bad.push(`模块 ${mid} 无可视化内容`);
   if (/undefined|NaN/.test(h)) bad.push(`模块 ${mid} HTML 含 undefined/NaN`);
 }
 

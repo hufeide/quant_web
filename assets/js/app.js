@@ -50,50 +50,130 @@
   }
 
   /* ---------- 图形渲染分派 ---------- */
-  function cell(c) {
-    if (c == null) return '--';
-    if (typeof c === 'object') {
-      if (c.bar != null) return '<span class="bar-cell" style="width:' + (14 + c.bar * 46).toFixed(0) + 'px"></span> <span style="font-size:10.5px;color:#9aa8bf">' + (c.bar * 100).toFixed(0) + '%</span>';
-      if (c.b) return '<span class="badge ' + c.b + '">' + esc(c.v) + '</span>';
-      if (c.c) return '<span class="' + c.c + '">' + esc(c.v) + '</span>';
-      return esc(c.v);
-    }
-    return esc(c);
-  }
-  function tableHTML(s) {
-    var h = '<div class="tw" style="max-height:' + (s.h || 250) + 'px"><table class="dt"><thead><tr>';
-    s.cols.forEach(function (c) { h += '<th>' + esc(c) + '</th>'; });
-    h += '</tr></thead><tbody>';
-    s.rows.forEach(function (r) {
-      h += '<tr>';
-      r.forEach(function (c) { h += '<td>' + cell(c) + '</td>'; });
-      h += '</tr>';
-    });
-    return h + '</tbody></table></div>';
-  }
-  function listHTML(s) {
-    var h = '<div class="lst" style="max-height:' + (s.h || 250) + 'px;overflow:auto">';
-    s.items.forEach(function (it) {
-      h += '<div class="row"><div><div class="t">' + it.t + '</div>' + (it.s ? '<div class="s">' + it.s + '</div>' : '') + '</div>' +
-        '<div class="rt">' + (it.b ? '<span class="badge ' + it.b + '">' + esc(it.rt || '') + '</span>' : esc(it.rt || '')) + '</div></div>';
-    });
-    return h + '</div>';
-  }
-  function chatHTML(s) {
-    var h = '<div class="chat">';
-    s.msgs.forEach(function (m) {
-      h += '<div class="msg ' + m.r + '"><div class="av">' + (m.r === 'ai' ? 'AI' : '我') + '</div><div class="bb">' + m.t + '</div></div>';
-    });
-    h += '</div><div class="askbar"><input placeholder="' + esc(s.ph || '输入你的研究问题…') + '" readonly><button>发送</button></div>';
-    return h;
-  }
+  // ===== AI 实演中心：脚本化交互演示引擎 =====
+  var __demos = {}; var __demoSeq = 0;
   function viz(spec) {
     if (!spec) return '';
-    if (spec.k === 'table') return tableHTML(spec);
-    if (spec.k === 'list') return listHTML(spec);
-    if (spec.k === 'chat') return chatHTML(spec);
     if (spec.k === 'html') return spec.html;
+    if (spec.k === 'demo') {
+      var id = 'demo-' + (++__demoSeq);
+      spec._hostId = id; __demos[id] = spec;
+      return '<div class="demo-host" id="' + id + '" data-demo></div>';
+    }
     return MC.render(spec);
+  }
+  // 供注册表（如场景配图库）复用同一套渲染分派
+  QW.viz = viz;
+  function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function demoInit(host, spec) {
+    if (host.__inited) return; host.__inited = true;
+    var log, input, busy = false;
+    function shell() {
+      host.innerHTML =
+        '<div class="demo-scenario"><b>▶ ' + escHtml(spec.scenario || 'AI 实演样例') + '</b>' +
+        '<button class="demo-restart" type="button">↺ 重放</button>' +
+        '<span class="demo-taglive"><span class="demo-live-dot"></span>脚本化演示 · 可点击追问</span></div>' +
+        '<div class="demo-log"></div>' +
+        '<div class="demo-composer"><input placeholder="' + escHtml(spec.placeholder || '输入你的问题，或点击上方推荐问法…') + '"/>' +
+        '<button type="button">发送</button></div>';
+      log = host.querySelector('.demo-log');
+      input = host.querySelector('input');
+      host.querySelector('button.demo-restart').onclick = function () { host.__inited = false; demoInit(host, spec); };
+      host.querySelector('.demo-composer button').onclick = onSend;
+      input.onkeydown = function (e) { if (e.key === 'Enter') onSend(); };
+    }
+    function scroll() { log.scrollTop = log.scrollHeight; }
+    function addMsg(who, html) {
+      var d = document.createElement('div');
+      d.className = 'demo-msg ' + who;
+      d.innerHTML = '<div class="demo-av">' + (who === 'me' ? '我' : 'AI') + '</div>' +
+        '<div class="demo-bubble">' + html + '</div>';
+      log.appendChild(d); scroll(); return d;
+    }
+    function typing() {
+      var d = addMsg('ai', '<span class="demo-typing"><i></i><i></i><i></i></span>');
+      return d;
+    }
+    function nodeHtml(node) {
+      var h = node.html || '';
+      if (node.kpis) {
+        h += '<div class="demo-cardgrid">' + node.kpis.map(function (k) {
+          return '<div class="demo-kpi"><div class="k">' + escHtml(k.k) + '</div><div class="v ' + (k.c || '') + '">' + escHtml(k.v) + '</div></div>';
+        }).join('') + '</div>';
+      }
+      if (node.steps) {
+        h += '<div class="demo-steps">' + node.steps.map(function (st, i) {
+          return '<div class="demo-step"><span class="demo-stepdot">' + (i + 1) + '</span><div><b>' + escHtml(st[0]) + '</b><br><span>' + escHtml(st[1]) + '</span></div></div>';
+        }).join('') + '</div>';
+      }
+      if (node.table) h += node.table;
+      if (node.chart) {
+        try { h += '<div class="demo-chart">' + viz(node.chart) + '</div>'; }
+        catch (e) { h += '<div class="demo-chart-err">图渲染失败: ' + escHtml(e.message) + '</div>'; }
+      }
+      if (node.verdict) h += '<div class="demo-verdict ' + (node.verdict[0] || 'wait') + '">' + node.verdict[1] + '</div>';
+      if (node.src) h += '<div class="demo-src">数据来源（示意）：' + node.src + '</div>';
+      // 走到结尾（无推荐问法）时自动补一个"回到开头"，保证任何一步都有可点选项
+      var chips = (node.chips && node.chips.length) ? node.chips
+        : (spec.nodes[spec.start] ? [{ t: '↺ 回到开头，换个问法', to: spec.start, gray: 1, quiet: 1 }] : []);
+      if (chips.length) {
+        h += '<div class="demo-chips">' + chips.map(function (c) {
+          return '<span class="demo-chip' + (c.gray ? ' gray' : '') + '" data-to="' + escHtml(typeof c === 'string' ? '' : (c.to || '')) +
+            '" data-q="' + escHtml(typeof c === 'string' ? c : c.t) + '" data-quiet="' + (c.quiet ? '1' : '') + '">' +
+            escHtml(typeof c === 'string' ? c : c.t) + '</span>';
+        }).join('') + '</div>';
+      }
+      return h;
+    }
+    function showNode(id, userText) {
+      var node = spec.nodes[id]; if (!node) return;
+      if (userText) addMsg('me', escHtml(userText));
+      busy = true;
+      var t = typing();
+      setTimeout(function () {
+        t.remove();
+        addMsg('ai', nodeHtml(node));
+        busy = false;
+        if (node.auto) setTimeout(function () { var n = spec.nodes[node.auto]; if (n) showNode(node.auto); }, 700);
+        if (input && !document.hidden) input.focus();
+      }, 480 + Math.random() * 420);
+    }
+    function answer(text) {
+      // 关键词路由 → 节点；未命中用 fallback
+      var rules = spec.routes || [], hit = null;
+      for (var i = 0; i < rules.length; i++) {
+        if (rules[i].kw.some(function (k) { return text.indexOf(k) >= 0; })) { hit = rules[i].to; break; }
+      }
+      showNode(hit || spec.fallback || Object.keys(spec.nodes)[0], text);
+    }
+    function onSend() {
+      var v = input.value.trim();
+      if (!v || busy) return;
+      input.value = ''; answer(v);
+    }
+    host.addEventListener('click', function (e) {
+      var chip = e.target.closest('.demo-chip');
+      if (chip && !busy) {
+        var to = chip.getAttribute('data-to'), q = chip.getAttribute('data-q');
+        if (chip.getAttribute('data-quiet')) {
+          q = '';
+          if (to === spec.start && log) log.innerHTML = '';   // 回到开头：清空历史重新演示
+        }
+        if (to) showNode(to, q); else answer(q);
+      }
+    });
+    shell();
+    // 开场白
+    var open = spec.nodes[spec.start];
+    addMsg('ai', nodeHtml(open));
+    if (open.auto) setTimeout(function () { var n = spec.nodes[open.auto]; if (n) showNode(open.auto); }, 800);
+    if (input) input.focus();
+  }
+  function bindDemos() {
+    document.querySelectorAll('[data-demo]').forEach(function (host) {
+      var spec = __demos[host.id];
+      if (spec) demoInit(host, spec);
+    });
   }
 
   /* ---------- 功能卡片 ---------- */
@@ -340,6 +420,7 @@
 
   /* ---------- 事件绑定 ---------- */
   function bindPage() {
+    bindDemos();
     Array.prototype.forEach.call(document.querySelectorAll('[data-open]'), function (el) {
       el.onclick = function (e) { e.preventDefault(); openDrawer(el.getAttribute('data-open')); };
     });

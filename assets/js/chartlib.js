@@ -195,6 +195,9 @@
     return s + '</svg>';
   };
 
+  // 分组柱（mbar 简写，与 bar 同实现）
+  C.mbar = C.bar;
+
   // 堆叠柱 / 堆叠面积
   C.stack = function (o) {
     var h = o.height || H, p = plot(h, { t: 28 }), cats = o.cats, series = o.series, n = cats.length;
@@ -674,19 +677,148 @@
     });
   };
 
-  /* ---------- 5. 对外接口 ---------- */
-  global.MC = {
-    rng: rng, gauss: gauss, walk: walk, ou: ou, months: months, days: days, T: T, fmt: fmt,
-    // 生成 OHLCV
-    ohlc: function (seed, n, start) {
-      var r = rng(seed), px = start || 3200, out = [];
-      for (var i = 0; i < n; i++) {
-        var o = px, c = px * (1 + 0.0008 + 0.013 * gauss(r));
-        var hi = Math.max(o, c) * (1 + Math.abs(gauss(r)) * 0.004), lo = Math.min(o, c) * (1 - Math.abs(gauss(r)) * 0.004);
-        out.push([o, hi, lo, c, 6e7 + Math.abs(gauss(r)) * 4e7]); px = c;
+  // 明细表格 / 事件清单 / 对话卡：非 SVG 视图，但同样由 render 统一渲染
+  function cellHtml(c) {
+    if (c == null) return '--';
+    if (typeof c === 'object') {
+      if (c.bar != null) return '<span class="bar-cell" style="width:' + (14 + c.bar * 46).toFixed(0) +
+        'px"></span> <span style="font-size:10.5px;color:#9aa8bf">' + (c.bar * 100).toFixed(0) + '%</span>';
+      if (c.b) return '<span class="badge ' + c.b + '">' + esc(c.v) + '</span>';
+      if (c.c) return '<span class="' + c.c + '">' + esc(c.v) + '</span>';
+      return esc(c.v);
+    }
+    return esc(c);
+  }
+  C.table = function (o) {
+    var h = '<div class="tw" style="max-height:' + (o.h || 250) + 'px"><table class="dt"><thead><tr>';
+    (o.cols || []).forEach(function (c) { h += '<th>' + esc(c) + '</th>'; });
+    h += '</tr></thead><tbody>';
+    (o.rows || []).forEach(function (r) {
+      h += '<tr>' + r.map(function (c) { return '<td>' + cellHtml(c) + '</td>'; }).join('') + '</tr>';
+    });
+    return h + '</tbody></table></div>';
+  };
+  C.list = function (o) {
+    var h = '<div class="lst" style="max-height:' + (o.h || 250) + 'px;overflow:auto">';
+    (o.items || []).forEach(function (it) {
+      h += '<div class="row"><div><div class="t">' + it.t + '</div>' + (it.s ? '<div class="s">' + it.s + '</div>' : '') +
+        '</div><div class="rt">' + (it.b ? '<span class="badge ' + it.b + '">' + esc(it.rt || '') + '</span>' : esc(it.rt || '')) +
+        '</div></div>';
+    });
+    return h + '</div>';
+  };
+  C.chat = function (o) {
+    var h = '<div class="chat">';
+    (o.msgs || []).forEach(function (m) {
+      h += '<div class="msg ' + m.r + '"><div class="av">' + (m.r === 'ai' ? 'AI' : '我') + '</div><div class="bb">' + m.t + '</div></div>';
+    });
+    return h + '</div><div class="askbar"><input placeholder="' +
+      esc(o.ph || '输入你的研究问题…') + '" readonly><button>发送</button></div>';
+  };
+
+  function ohlc(seed, n, start) {
+    var r = rng(seed), px = start || 3200, out = [];
+    for (var i = 0; i < n; i++) {
+      var o = px, c = px * (1 + 0.0008 + 0.013 * gauss(r));
+      var hi = Math.max(o, c) * (1 + Math.abs(gauss(r)) * 0.004), lo = Math.min(o, c) * (1 - Math.abs(gauss(r)) * 0.004);
+      out.push([o, hi, lo, c, 6e7 + Math.abs(gauss(r)) * 4e7]); px = c;
+    }
+    return out;
+  }
+
+  /* ---------- 5. 简写规格归一化 ---------- */
+  /* 演示脚本（AI 实演中心）使用声明式简写：
+     {k:'line', n:60, names:['A','B']} / {k:'bar', cats:[...], center, scale} /
+     {k:'hbar', items:['甲','乙'], center, scale} / {k:'scatter', n, seed} /
+     {k:'treemap', names:[...]} / {k:'candle', n, start, seed} / {k:'mbar', ...}
+     这里统一展开为完整规格，数据仍由种子随机生成（示意数据）。 */
+  function seedOf(o, p) {
+    if (o.seed) return String(o.seed);
+    var key = (o.cats || o.names || o.items || []).join(',');
+    return p + '|' + key + '|' + (o.n || '') + '|' + (o.center || '') + '|' + (o.scale || '');
+  }
+  function quick(o) {
+    if (!o || !o.k) return o;
+    if (o.k === 'mbar') o.k = 'bar';
+    var k = o.k;
+
+    // 折线：names + n（或 monthly / mode:'ou'）
+    if (k === 'line' && !o.series && o.names) {
+      var n = o.n || 60, sd = seedOf(o, 'L');
+      o.cats = o.cats || (o.monthly ? months(n) : days(n));
+      o.series = o.names.map(function (nm, i) {
+        var d = o.mode === 'ou'
+          ? ou(sd + '#' + i, n, { mean: (o.mean == null ? 3 : o.mean) + i * (o.gap || 0), sd: o.sd == null ? .5 : o.sd })
+          : walk(sd + '#' + i, n, {
+            start: (o.start == null ? 100 : o.start) * (1 - i * (o.gap || 0)),
+            vol: o.vol == null ? .011 : o.vol,
+            drift: (o.drift == null ? .0008 : o.drift) - i * 0.0004
+          });
+        return { name: nm, data: d, color: T.pal[i % T.pal.length], area: !!o.area && i === 0, dash: i > 0 && !!o.dash };
+      });
+    }
+    // 柱状 / 分组柱：cats + center/scale（+names 为分组）
+    if (k === 'bar' && (!o.series || !o.series.length)) {
+      var cats = o.cats || [], rb = rng(seedOf(o, 'B'));
+      var c0 = o.center == null ? 0 : o.center, sc = o.scale == null ? 3 : o.scale;
+      if (o.names && o.names.length) {
+        o.series = o.names.map(function (nm, i) {
+          return {
+            name: nm, color: T.pal[i % T.pal.length], signColor: o.sign !== false,
+            data: cats.map(function () { return +Math.abs(c0 + sc * gauss(rb)).toFixed(2); })
+          };
+        });
+      } else {
+        o.series = [{
+          name: o.name || '值', color: o.color, signColor: o.sign !== false,
+          data: cats.map(function () { return +(c0 + sc * gauss(rb)).toFixed(2); })
+        }];
       }
-      return out;
-    },
+      if (o.legend == null) o.legend = (o.series.length > 1);
+    }
+    // 横向条形：items 为字符串数组（+vals 可指定具体数值）
+    if (k === 'hbar' && o.items && typeof o.items[0] === 'string') {
+      var c1 = o.center == null ? 0 : o.center, s1 = o.scale == null ? 4 : o.scale;
+      var rh = rng(seedOf(o, 'H'));
+      var arr = o.items.map(function (nm, i) {
+        var v = o.vals && o.vals[i] != null ? o.vals[i] : +(c1 + s1 * gauss(rh)).toFixed(2);
+        return { n: nm, v: v };
+      });
+      if (o.keepOrder !== true) arr.sort(function (a, b) { return o.asc ? a.v - b.v : b.v - a.v; });
+      o.items = arr;
+    }
+    // 散点：n + seed + 线性关系参数
+    if (k === 'scatter' && !o.points) {
+      var rs = rng(seedOf(o, 'S')), ns = o.n || 80, pts = [];
+      for (var i2 = 0; i2 < ns; i2++) {
+        var x = (o.xc == null ? 20 : o.xc) + (o.xs == null ? 8 : o.xs) * gauss(rs);
+        pts.push([+x.toFixed(3),
+          +((o.b == null ? .4 : o.b) * x + (o.a == null ? 2 : o.a) + (o.e == null ? 4 : o.e) * gauss(rs)).toFixed(3),
+          2.5 + rs() * 3, rs() > .5 ? T.pal[0] : T.pal[3]]);
+      }
+      o.points = pts;
+    }
+    // 树图：names + seed
+    if (k === 'treemap' && !o.items && o.names) {
+      var rt = rng(seedOf(o, 'T'));
+      o.items = o.names.map(function (nm, i) {
+        return {
+          n: nm,
+          v: o.vals && o.vals[i] != null ? o.vals[i] : +(10 + 90 * rt()).toFixed(1),
+          chg: +(3.2 * gauss(rt)).toFixed(2)
+        };
+      });
+    }
+    // K 线：n + start + seed
+    if (k === 'candle' && !o.data) o.data = ohlc(seedOf(o, 'C'), o.n || 60, o.start || 3200);
+    return o;
+  }
+
+  /* ---------- 6. 对外接口 ---------- */
+  global.MC = {
+    rng: rng, gauss: gauss, walk: walk, ou: ou, months: months, days: days, T: T, fmt: fmt, quick: quick,
+    // 生成 OHLCV
+    ohlc: ohlc,
     matrix: function (seed, nr, nc, o) {
       o = o || {};
       var r = rng(seed), m = [];
@@ -701,8 +833,16 @@
       return m;
     },
     render: function (spec) {
-      if (!spec || !C[spec.k]) return '<div class="mc-missing">图形占位</div>';
-      try { return C[spec.k](spec); } catch (e) { return '<div class="mc-missing">渲染失败: ' + esc(e.message) + '</div>'; }
+      if (!spec) return '<div class="mc-missing">图形占位</div>';
+      var o = quick(spec);
+      if (!C[o.k]) return '<div class="mc-missing">图形占位</div>';
+      var out;
+      try { out = C[o.k](o); } catch (e) { out = '<div class="mc-missing">渲染失败: ' + esc(e.message) + '</div>'; }
+      if (o.title) {
+        out = '<div class="mc-wrap"><div class="mc-title">' + esc(o.title) +
+          (o.sub ? '<span>' + esc(o.sub) + '</span>' : '') + '</div>' + out + '</div>';
+      }
+      return out;
     },
     types: C
   };

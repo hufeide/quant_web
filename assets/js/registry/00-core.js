@@ -13,7 +13,7 @@
   QW.groups = [
     { n: '总览与智能信号', ms: ['workbench', 'home', 'radar', 'regime', 'atlas', 'atlas2'] },
     { n: '投资决策闭环', ms: ['decision', 'construction'] },
-    { n: 'AI 智能体系', ms: ['ai', 'agent', 'aiagents', 'researchos', 'arena', 'aiops'] },
+    { n: 'AI 智能体系', ms: ['demo', 'fusion', 'ai', 'agent', 'aiagents', 'researchos', 'arena', 'aiops'] },
     { n: '自上而下研究', ms: ['macro', 'industry', 'allocation', 'overseas', 'theme', 'sustain'] },
     { n: '分资产研究', ms: ['equity', 'bond', 'fund', 'futures', 'commodity', 'options', 'rates'] },
     { n: '另类与一级市场', ms: ['primary', 'realestate', 'crypto', 'credit'] },
@@ -68,6 +68,8 @@
     aiagents: { n: 'AI 岗位智能体', ic: '♟', sub: 'Role Agents', desc: '投资经理、宏观/行业/基本面研究员、交易员、风控等 17 类岗位智能体，自动组队、记忆经验、反思纠错与观点竞争。' },
     researchos: { n: 'AI 自动研究工厂', ic: '⛭', sub: 'Research Factory', desc: '从自动提出问题、生成假设、寻找反例、取数做因子到回测、过拟合闸门、改进、成文跟踪的无人值守研究闭环。' },
     arena: { n: '预测竞技场', ic: '◬', sub: 'Forecast Arena', desc: '大模型、机器学习与统计模型对股票、宏观、利率、汇率同题竞赛，按真实结果排名、校准与动态集成。' },
+    demo: { n: 'AI 实演中心', ic: '▶', sub: 'Live AI Demos', desc: '搜索与 AI 功能的可点击具体样例：真实多轮对话、跨模块分析过程与结果卡片，按提示即可完整体验（纯样例演示）。' },
+    fusion: { n: 'AI 融合场景中心', ic: '✺', sub: 'AI Fusion Hub', desc: '覆盖全部业务模块的 200+ 个 AI 深度结合场景库，按角色与意图交互引导，每个场景可一键试运行、转技能流或加入我的工作台。' },
     decision: { n: '投资决策操作系统', ic: '➤', sub: 'Decision OS', desc: '研究到交易的决策中间层：机会中心、投资论点、预测到仓位、决策日志、投委会与投资生命周期，把研究真正变成仓位。' },
     construction: { n: '组合构建引擎', ic: '⊛', sub: 'Portfolio Construction', desc: '12 类机构级优化器统一工作台：均值方差、BL、风险平价、HRP、CVaR、Kelly、稳健与状态条件优化，回答"配多少、为什么"。' },
     workbench: { n: '我的 AI 工作台', ic: '✦', sub: 'My AI Workbench', desc: '面向个人投资者、基金经理、研究员三类人群的可搭建 AI 工作台：通过搜索与对话把全平台任意功能组装成专属技能流，围绕自己的目标自动化运行。' },
@@ -78,7 +80,8 @@
   // 子功能紧凑写法："名称|一句话说明|可选标签"
   function parseSub(fid, s, i) {
     var a = String(s).split('|');
-    return { id: fid + '.' + (i + 1), n: (a[0] || '').trim(), d: (a[1] || '').trim(), t: (a[2] || '').trim() };
+    var n = (a[0] || '').trim(), d = (a[1] || '').trim();
+    return { id: fid + '.' + (i + 1), n: n, d: d || n, labelOnly: !a[1], t: (a[2] || '').trim() };
   }
   QW.F = function (o) {
     if (!o.id || !o.m) throw new Error('feature 缺少 id/m');
@@ -246,10 +249,13 @@
     o = o || {};
     return { k: 'table', cols: cols, rows: rows, h: o.h };
   };
-  // 生成随机表格行
+  // 生成表格：labels 传字符串数组时按 types 随机补齐其余列；传二维数组时视为完整行
   V.tgen = function (seed, cols, labels, o) {
     o = o || {};
     var r = g.MC.rng(seed);
+    if (labels && labels.length && Array.isArray(labels[0])) {
+      return { k: 'table', cols: cols, rows: labels, h: o.h };
+    }
     return {
       k: 'table', cols: cols, h: o.h,
       rows: labels.map(function (lb) {
