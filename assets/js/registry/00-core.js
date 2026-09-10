@@ -20,6 +20,11 @@
     { n: '量化与组合引擎', ms: ['factor', 'strategy', 'aipm', 'portfolio', 'execution', 'market'] },
     { n: '资管业务与客户', ms: ['insurance', 'wealth', 'client'] },
     { n: '数据与知识底座', ms: ['data', 'altdata', 'knowledge', 'platform'] },
+    { n: '研究管理与成本', ms: ['rm', 'tax', 'senti'] },
+    { n: '指数、发行与公司行为', ms: ['index', 'ecm', 'corpact'] },
+    { n: '运营、流动性与货币市场', ms: ['ops', 'liquidity', 'mm'] },
+    { n: '相对价值、微结构与地缘', ms: ['rv', 'micro', 'geo'] },
+    { n: '另类实物与抵押品', ms: ['infra', 'collateral'] },
     { n: '报告合规与治理', ms: ['report', 'regtech'] }
   ];
 
@@ -73,7 +78,23 @@
     decision: { n: '投资决策操作系统', ic: '➤', sub: 'Decision OS', desc: '研究到交易的决策中间层：机会中心、投资论点、预测到仓位、决策日志、投委会与投资生命周期，把研究真正变成仓位。' },
     construction: { n: '组合构建引擎', ic: '⊛', sub: 'Portfolio Construction', desc: '12 类机构级优化器统一工作台：均值方差、BL、风险平价、HRP、CVaR、Kelly、稳健与状态条件优化，回答"配多少、为什么"。' },
     workbench: { n: '我的 AI 工作台', ic: '✦', sub: 'My AI Workbench', desc: '面向个人投资者、基金经理、研究员三类人群的可搭建 AI 工作台：通过搜索与对话把全平台任意功能组装成专属技能流，围绕自己的目标自动化运行。' },
-    aipm: { n: 'AI 组合驾驶舱', ic: '◐', sub: 'AI Portfolio Copilot', desc: 'AI 自动交易决策、动态风险预算与杠杆、尾部对冲 Overlay、危机防御模式、反事实引擎与可拖拽组合沙盘。' }
+    aipm: { n: 'AI 组合驾驶舱', ic: '◐', sub: 'AI Portfolio Copilot', desc: 'AI 自动交易决策、动态风险预算与杠杆、尾部对冲 Overlay、危机防御模式、反事实引擎与可拖拽组合沙盘。' },
+
+    /* ---- 四期：补齐缺失的投研板块 ---- */
+    index: { n: '指数与基准研究', ic: '⊞', sub: 'Index & Benchmark', desc: '指数体系与编制规则、成分权重穿透、调整预测与资金冲击、指数复制与跟踪误差归因、指数增强超额归因、基准选择与定制合成基准。' },
+    ecm: { n: '一级发行与资本市场', ic: '⊚', sub: 'Equity Capital Markets', desc: 'IPO 询价与打新、定增/配股/转债等再融资、限售解禁与股东减持、股本结构与股东行为、簿记建档与定价、ECM 事件对组合的影响与应对。' },
+    corpact: { n: '公司行为与事件驱动', ic: '⚑', sub: 'Corporate Actions', desc: '分红派息与送转配股、并购重组与要约套利、分拆与重整、回购增持与股权激励、事件驱动策略库与信号看板。' },
+    ops: { n: '投资运营与清算交收', ic: '⚙', sub: 'Investment Ops', desc: '交易确认与清算交收、现金与头寸管理、公司行动处理、托管与对账、费用与业绩报酬、差错管理与多账户份额登记。' },
+    liquidity: { n: '流动性与负债管理', ic: '≈', sub: 'Liquidity & Funding', desc: '资产流动性分层、赎回与现金流预测、融资与抵押品、应急流动性预案、摆动定价与侧袋、流动性成本归因。' },
+    mm: { n: '货币市场与资金面', ic: '⇹', sub: 'Money Market', desc: '央行操作与流动性投放、回购与质押融资、同业存单与票据、短端利率曲线、资金面情绪与跨季跨节、流动性传导监测。' },
+    geo: { n: '地缘与政策风险', ic: '⛨', sub: 'Geopolitical Risk', desc: '地缘风险指数、制裁与出口管制清单、政策文本解析与传导、国别风险、供应链安全与关键物资依赖度。' },
+    rv: { n: '跨资产相对价值', ic: '⇄', sub: 'Cross-Asset RV', desc: '股债性价比、AH 与跨境比价、内外盘商品价差、跨市场利差与汇率偏离、相对价值信号与交易结构。' },
+    micro: { n: '交易微结构', ic: '⇶', sub: 'Market Microstructure', desc: '盘口与订单流、成交分布与买卖压力、竞价与集合竞价行为、日内流动性与冲击、微观结构异常与执行窗口。' },
+    rm: { n: '研究管理与评级', ic: '✎', sub: 'Research Management', desc: '评级与目标价体系、一致预期与业绩超预期预测、研究覆盖与产能、研究员绩效、研报审阅留痕与推荐组合跟踪。' },
+    tax: { n: '税务与成本', ic: '⌧', sub: 'Tax & Cost', desc: '资本利得与股息税、印花税与预提税、跨境税务与协定、税收损失收割、交易成本与总持有成本分析。' },
+    senti: { n: '行为金融与情绪', ic: '☺', sub: 'Sentiment & Behavior', desc: '投资者情绪指数、新闻与社交情绪、搜索与关注度、资金流情绪、行为偏差诊断与情绪极值预警。' },
+    infra: { n: '基础设施与实物资产', ic: '⛏', sub: 'Infrastructure', desc: '交通与能源基建、数据中心与通信、管网与仓储、设备租赁、航运与物流实物资产、特许经营与 PPP 项目。' },
+    collateral: { n: '保证金与抵押品', ic: '⛁', sub: 'Margin & Collateral', desc: '保证金模型与测算、抵押品池与折扣率、抵押品优化与调配、追保预警与压力情形、集中清算与对手方风险。' }
   };
 
   /* ---------- 注册器 ---------- */
