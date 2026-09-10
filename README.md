@@ -78,7 +78,7 @@ F({                       // 一级：模块（60 个）
 ```
 quant_web/
 ├── index.html
-├── FUNCTIONS.md                 功能说明书（由注册表生成，13,900 行）
+├── FUNCTIONS.md                 功能说明书（由注册表自动生成，与网页同源、永不脱节）
 ├── README.md
 ├── assets/
 │   ├── css/app.css
@@ -108,12 +108,12 @@ quant_web/
 ## 开发与校验
 
 ```bash
-node tools/check.mjs       # 515 面板渲染、4013 项功能字段、demo 脚本完整性
-node tools/dom-check.mjs   # 60 个页面 + 全部抽屉在 DOM 桩下渲染
+node tools/check.mjs       # 613 面板渲染、4861 项功能字段、demo 脚本完整性
+node tools/dom-check.mjs   # 63 个页面 + 全部抽屉在 DOM 桩下渲染
 node tools/gen-docs.mjs    # 重新生成 FUNCTIONS.md
 ```
 
-当前状态：3,017 项功能全部通过；每个面板都有 6-10 项子功能；所有 SVG 坐标在画布内；栅格在任意标签筛选下每行恰好填满 12 列。投资决策闭环（决策 OS + 组合构建引擎）补齐了"研究→论点→预测→仓位→交易→归因→学习"的中间层。
+当前状态：4861 项功能全部通过；每个面板都有 6-10 项子功能；所有 SVG 坐标在画布内；栅格在任意标签筛选下每行恰好填满 12 列。投资决策闭环（决策 OS + 组合构建引擎）补齐了"研究→论点→预测→仓位→交易→归因→学习"的中间层。
 
 ### 新增一个功能
 
